@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.GithubFeedbackForm',
       version='0.0.1',
       description=('A docassemble extension.'),
-      long_description='# docassemble.GithubFeedbackForm\n\nA docassemble extension.\n\n## Author\n\nSystem Administrator, admin@admin.com\n\n',
+      long_description='# docassemble.GithubFeedbackForm\r\n\r\nA package to gather feedback and then submit issues to Github.\r\n\r\nAdd a personal access token to a Github account with permissions to\r\ncreate issues on your repository. Then add a section like this in your Docassemble configuration:\r\n\r\n```\r\ngithub issues:\r\n  username: "suffolklitlab-issues"\r\n  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxx"\r\n```\r\n\r\n## Author\r\n\r\nQuinten Steenhuis, qsteenhuis@suffolk.edu',
       long_description_content_type='text/markdown',
       author='System Administrator',
       author_email='admin@admin.com',
