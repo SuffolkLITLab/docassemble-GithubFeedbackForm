@@ -53,7 +53,7 @@ setup(name='docassemble.GithubFeedbackForm',
       url='https://docassemble.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.MAVirtualCourt'],
+      install_requires=['docassemble.MAVirtualCourt>=1.0.22'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/GithubFeedbackForm/', package='docassemble.GithubFeedbackForm'),
      )

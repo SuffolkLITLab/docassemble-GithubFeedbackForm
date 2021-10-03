@@ -1,39 +1,78 @@
 ---
-include: 
-  - docassemble.MAVirtualCourt:basic-questions.yml
+comment: |
+  ########## How to use this file #################
+  
+  1. Create a new GitHub user and create a personal access token on it.
+  1. Edit your config, and create a block like this:
+        username: "YOUR_NEW_DEDICATED_ISSUE_CREATION_ACCOUNT"
+        token: "..." # A valid GitHub personal access token associated with the username above
+        default repository owner: YOUR_GITHUB_USER_OR_ORG_HERE
+        allowed repository owners: # List the repo that your account will be allowed to create issues on
+          - YOUR_GITHUB_USER_OR_ORG_HERE 
+          - SECOND_GITHUB_USER_OR_ORG
+  2. Add a link on each page, in the footer or `under` area.    
+  3. Optionally, create your own feedback.yml file. It should look like this:
+        include:
+          - docassemble.GithubFeedbackForm:feedback.yml
+        ---
+        code: |
+          al_feedback_form_title = "Your title here"  
+        ---
+        code: |
+          # This email will be used ONLY if there is no valid GitHub config
+          al_error_email = "Your error email here"
+        ---
+        template: al_how_to_get_legal_help
+        content: |
+          If you need more help, these are free resources:
+
+          ... [INCLUDE STATE-SPECIFIC RESOURCES]
+          
+          
+    You may also want to customize the metadata: title, and override any
+    specific questions.
+    
+---
+code: |
+  al_feedback_form_title = "Court Forms Online"  
+---
+code: |
+  # This email will be used ONLY if there is no valid GitHub config
+  al_error_email = get_config('error notification email')
+---
+comment: |
+  feedback.yml&
+  github_repo=docassemble-HousingCodeChecklist&
+  github_user=nonprofittechy&
+  variable=intro&
+  question_id=intro&
+  package_version=1.10.0&
+  reset=1&
+  from_list=1
 ---
 modules:
   - .github_issue
 ---
+metadata:
+  title: User Feedback
+---
 # This is the repository that Github issue will be created on if
 # the repository is not passed as a URL argument
-code: default_repository = 'docassemble-MAVirtualCourt'  
+code: default_repository = 'docassemble-AssemblyLine'  
 ---
-code: default_github_user_or_organization = 'suffolklitlab'
+code: |
+  default_github_user_or_organization = get_config('github issues',{}).get('default repository owner') or 'suffolklitlab'
 ---
-comment: |
-  For security reasons, you should limit
-  the ability of this script to create issues to any repositories
-  that you control.
-variable name: allowed_github_users
-data:
-  - "suffolklitlab"
-  - "suffolklitlab-issues"
+code: |
+  allowed_github_users = get_config('github issues',{}).get('allowed repository owners') or ["suffolklitlab","suffolklitlab-issues"]
 ---
 features:
-  labels above fields: True
----
-default screen parts:
-  under: |
-    
+  labels above fields: True 
 ---
 mandatory: True
 code: |
   intro
-  # Temporary override
-  default_github_user_or_organization = "suffolklitlab-issues"
-  default_repository = "demo"
-  
+  # Temporary override  
   if reason == 'bug':
     bug_details
     issue_template = bug_report
@@ -50,9 +89,9 @@ code: |
   store_variables_snapshot() # this is mostly just for backup reasons
   end_results
 ---
-code: github_user = url_args.get('github_user', default_github_user_or_organization)
+code: github_user = url_args.get('github_user', default_github_user_or_organization) or "suffolklitlab-issues"
 ---
-code: github_repo = url_args.get('github_repo', default_repository)
+code: github_repo = url_args.get('github_repo', default_repository) or "demo"
 ---
 code: variable = url_args.get('variable')
 ---
@@ -62,26 +101,25 @@ code: |
   if not task_performed('sent to github', persistent=True):
     if github_user in allowed_github_users:
       issue_url = make_github_issue(github_user, github_repo, template=issue_template)
+      if not issue_url and get_config('error notification email'):
+        log(f"Unable to create issue on repo {github_repo}, falling back to emailing {get_config('error notification email')}")
+        send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
+      elif not issue_url:
+        log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
     mark_task_as_performed('sent to github', persistent=True)
   send_to_github = True
 ---
 id: intro
 question: |
-  Mass Access - Tell us how we're doing
+  ${ al_feedback_form_title } - Tell us how we're doing
 subquestion: |
   The information you type here will be publicly available. That means anyone
   will be able to see it. Use this form to tell us about problems that do not
   include any personal information.
+  
+  ${ al_how_to_get_legal_help }
 
-  If you need more help, these are free resources:
-
-  - For help with a non-criminal legal problem in Massachusetts, use the 
-  [Massachusetts Legal Resource Finder](http://masslegalhelp.org/find-legal-aid)
-
-  - If your income is low enough, try the [Mass Legal Answers Online](http://masslao.org/) website where volunteer lawyers answer questions
-  about your personal civil legal problems. 
-
-  Thank you for telling us about your experience with the Mass Access forms.
+  Thank you for telling us about your experience with this website.
 fields:
   - "**What would you like to tell us about?**": reason
     input type: radio
@@ -91,6 +129,17 @@ fields:
       - I'd like to tell you something else: else
       - I'm looking for more help: help      
 continue button field: intro  
+---
+template: al_how_to_get_legal_help
+content: |
+  If you need more help, these are free resources:
+
+  - For help with a non-criminal legal problem in Massachusetts, use the 
+  [Massachusetts Legal Resource Finder](http://masslegalhelp.org/find-legal-aid)
+
+  - If your income is low enough, try the [Mass Legal Answers Online](http://masslao.org/) website where volunteer lawyers answer questions
+  about your personal civil legal problems. 
+  
 ---
 id: bug
 question: |
@@ -103,15 +152,12 @@ subquestion: |
   on a public website.
 fields:
   - label: |
-      **What form were you using?**
-    field: form_title
-    show if:
-      code: |
-        github_repo == default_repository
-  - label: |
       **What was the title at the top of the page where
       the bug happened?**
     field: page_title
+    show if:
+      code: |
+        not question_id
   - label: |
       **Tell us the steps that you followed before you noticed the problem.** [BR]
       For example: 1. I opened the interview. 2. On the first page, I put in just my first name. 3. On the second page, I put in my phone number. 4. I pressed a button to go to the next page.
@@ -197,13 +243,8 @@ question: |
 subquestion: |
   We are sorry that we couldn't do more to help you.
   
-  If you need more help, these are free resources:
+  ${ al_how_to_get_legal_help }
 
-  - For help with a non-criminal legal problem in Massachusetts, use the 
-  [Massachusetts Legal Resource Finder](http://masslegalhelp.org/find-legal-aid)
-
-  - If your income is low enough, try the [Mass Legal Answers Online](http://masslao.org/) website where volunteer lawyers answer questions
-  about your personal civil legal problems. 
 buttons:
   - Exit: exit
     url: https://massaccess.suffolklitlab.org
@@ -215,7 +256,7 @@ question: |
 subquestion: |
   We appreciate you letting us know how we are doing.
   
-  % if defined('issue_url'):
+  % if issue_url:
   If you would like to track this issue, you can [follow 
   it](${issue_url}) on GitHub.
   % endif
@@ -225,14 +266,19 @@ buttons:
 ---
 template: bug_report
 subject: |
-  User: Bug report
+  % if question_id:
+  ID ${ question_id }: 
+  % endif
+  User Bug report
+  % if variable:
+  (`${ variable }`)
+  % endif
 content: |
   &nbsp; | &nbsp;
   -------|------------------------------------
-  % if github_repo == default_repository:
-  Form title | ${ form_title }
-  % endif
+  % if defined('page_title'):
   Page title | ${ page_title }
+  % endif
   Steps to reproduce | ${ reproduce_bug }
   Expected behavior | ${ bug_expected_behavior }
   What happened instead | ${ bug_details }
@@ -246,13 +292,16 @@ content: |
 ---
 template: confusing_report
 subject: |
-  User: part of the form was confusing
+  % if question_id:
+  ID ${ question_id }: 
+  % endif
+  User feedback - confusing language
+  % if variable:
+  (`${ variable }`)
+  % endif
 content: |
   &nbsp; | &nbsp;
   -------|------------------------------------
-  % if github_repo == default_repository:
-  Form title | ${ form_title }
-  % endif  
   Page title | ${ page_title }
   What was confusing | ${ confusing_details }
   Other information | ${ share_other_details }
@@ -265,11 +314,13 @@ content: |
 ---
 template: other_feedback_report
 subject: |
-  User: other feedback
-content: |
-  % if github_repo == default_repository:
-  ## Form title : ${ form_title }
+  % if question_id:
+  ID ${ question_id }: 
   % endif
-  
+  User feedback
+  % if variable:
+  (`${ variable }`)
+  % endif
+content: |
   ## User feedback:  
   ${ other_feedback }
