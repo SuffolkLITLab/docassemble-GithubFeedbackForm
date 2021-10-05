@@ -22,6 +22,7 @@ github issues:
   Note that it is important to provide a list of allowed repository owners.
   This is used to prevent your form from being used to spam GitHub 
   repositories with feedback.
+  
 3. Add a link on each page, in the footer or `under` area.  
    You can use the `feedback_link()` function to add a link, like this:
    `[:comment-dots: Feedback](${ feedback_link(user_info()) } ){:target="_blank"}`
@@ -38,6 +39,7 @@ github issues:
     Each has a sensible default. Most likely, you will limit your custom
     parameters to the `github_repo` if you want feedback links to work
     from the docassemble playground.
+    
 4. Optionally, create your own feedback.yml file. It should look like this,
    with whatever customizations you choose:
 
