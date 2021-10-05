@@ -1,13 +1,22 @@
 # docassemble.GithubFeedbackForm
 
-A package to gather feedback and then submit issues to Github.
+A package that uses the GitHub API to gather feedback and then submit issues to Github that can be embedded
+into a Docassemble interview. Makes it easy to collect per-page feedback.
 
-  
-1. Create a new GitHub user and create a personal access token on it. It does
- not need any special permissions; optionally, you can limit it. It will
- need to be able to make pull requests on the repos you want to add issues
- to. Public repos usually leave pull access open.
-2. Edit your config, and create a block like this:
+This package is designed to support the following workflow:
+
+1. Work is stored on a public GitHub repository, or at least, you setup a repository to collect feedback.
+1. There is one package per "interview"/"app".
+2. Each question block has a unique question ID.
+3. Preferably--questions are triggered in an interview order block. If you use a series of `mandatory`
+  blocks instead of a single mandatory block, the `variable` listed in the bug report may not be as useful.
+
+## Getting started
+
+1. Create a new GitHub user and create a personal access token on it. The personal access
+   token needs minimal permissions. Specifically, it needs to be allowed to make pull requests.
+   Pull request access is allowed for anyone by default when you create a new, public GitHub repository.
+3. Edit your config, and create a block like this:
 
 ```yaml
 github issues:
@@ -40,8 +49,8 @@ github issues:
     parameters to the `github_repo` if you want feedback links to work
     from the docassemble playground.
     
-4. Optionally, create your own feedback.yml file. It should look like this,
-   with whatever customizations you choose:
+4. Optionally, create your own feedback.yml file. If you want a custom feedback.yml,
+   it should look like this, with whatever customizations you choose:
 
 ```yaml
 include:
