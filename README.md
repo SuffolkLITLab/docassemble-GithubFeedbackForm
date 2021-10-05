@@ -22,7 +22,22 @@ github issues:
   Note that it is important to provide a list of allowed repository owners.
   This is used to prevent your form from being used to spam GitHub 
   repositories with feedback.
-3. Add a link on each page, in the footer or `under` area.    
+3. Add a link on each page, in the footer or `under` area.  
+   You can use the `feedback_link()` function to add a link, like this:
+   `[:comment-dots: Feedback](${ feedback_link(user_info()) } ){:target="_blank"}`
+   
+   Optional parameters:
+    - `i`: the feedback form, like: docassemble.AssemblyLine:feedback.yml
+    - `github_repo`: repo name, like: docassemble-AssemblyLine
+    - `github_user`: owner of the repo, like: suffolklitlab
+    - `variable`: variable being sought, like: intro
+    - `question_id`:  id of the current question, like: intro
+    - `package_version`: version number of the current package
+    - `filename`: filename of the interview the user is providing feedback on.
+    
+    Each has a sensible default. Most likely, you will limit your custom
+    parameters to the `github_repo` if you want feedback links to work
+    from the docassemble playground.
 4. Optionally, create your own feedback.yml file. It should look like this,
    with whatever customizations you choose:
 

@@ -8,16 +8,6 @@ code: |
   # This email will be used ONLY if there is no valid GitHub config
   al_error_email = get_config('error notification email')
 ---
-comment: |
-  feedback.yml&
-  github_repo=docassemble-HousingCodeChecklist&
-  github_user=nonprofittechy&
-  variable=intro&
-  question_id=intro&
-  package_version=1.10.0&
-  reset=1&
-  from_list=1
----
 id: interview order
 mandatory: True
 code: |
@@ -38,7 +28,7 @@ code: |
     issue_template = generic_report[reason]
   send_to_github
   prevent_going_back()
-  store_variables_snapshot(persistent=True) # this is mostly just for backup reasons
+  store_variables_snapshot(persistent=True)
   end_results
 ---
 metadata:
@@ -119,6 +109,8 @@ subquestion: |
   The information you type here will be publicly available. That means anyone
   will be able to see it. 
   
+  ${ al_how_to_get_legal_help }
+  
   It helps us to know how to prioritize your feedback. We use
   a [5-level 
   rating](https://suffolklitlab.org/legal-tech-class/docs/legal-tech-overview/maturity-model/#example-maturity-model-for-the-massaccess-project)
@@ -135,9 +127,6 @@ subquestion: |
   3. Similar to an intake with an experienced attorney
   4. Provides substantial help and tailored resources in addition
   to filling in the form.
-  
-  ${ feedback_link(user_info(), github_repo="docassemble-AssemblyLine")}
-  
 fields:
   - "**What would you like to tell us about?**": reason
     input type: radio
@@ -180,7 +169,7 @@ fields:
       code: |
         get_config('debug')          
   - label: |
-      **What language fix is needed? **
+      **What language fix is needed?**
     field: language
     datatype: area
     rows: 4
@@ -256,7 +245,6 @@ content: |
 
   - If your income is low enough, try the [Mass Legal Answers Online](http://masslao.org/) website where volunteer lawyers answer questions
   about your personal civil legal problems. 
-  
 ---
 id: bug
 question: |
@@ -292,17 +280,17 @@ fields:
     field: share_other_details   
     datatype: area
     required: False
-  - label: |
-      **Share my specific answers with an administrator**[BR]
-      You can optionally share your answers on the online form with an
-      administrator. Only two Suffolk University employees can view
-      this information. It will not be made public.
-      [BR]
-      If you say no, it may be harder for us to track down the problem,
-      but we will still try our best.
-      We will not contact you either way.
-    field: share_interview_answers
-    datatype: yesnoradio
+#  - label: |
+#      **Share my specific answers with an administrator**[BR]
+#      You can optionally share your answers on the online form with an
+#      administrator. Only two Suffolk University employees can view
+#      this information. It will not be made public.
+#      [BR]
+#      If you say no, it may be harder for us to track down the problem,
+#      but we will still try our best.
+#      We will not contact you either way.
+#    field: share_interview_answers
+#    datatype: yesnoradio
 ---
 id: confusing
 question: |
@@ -488,12 +476,12 @@ code: |
       issue_url = make_github_issue(github_user, github_repo, template=issue_template)
       if not issue_url and al_error_email:
         log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-        send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
+        send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
       elif not issue_url:
         log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
     else:
       log(f"This form is not permitted to add issues on the {github_user} account. Check your config.")
       log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-      send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
+      send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
     mark_task_as_performed('sent to github', persistent=True)
   send_to_github = True  
