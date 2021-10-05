@@ -76,7 +76,7 @@ def feedback_link(user_info_object=None,
     variable=_variable, 
     question_id=_question_id, 
     package_version=_package_version, 
-    filename=_filename
+    filename=_filename,
     local=False,reset=1)                         
 
 def make_github_issue(repo_owner, repo_name, template=None, title=None, body=None):
