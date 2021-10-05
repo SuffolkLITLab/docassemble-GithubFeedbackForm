@@ -49,6 +49,14 @@ github issues:
     parameters to the `github_repo` if you want feedback links to work
     from the docassemble playground.
     
+    You will also need to include the `github_issue.py` module in your parent interview,
+    like this: 
+    ```yaml
+    ---
+    modules:
+      - docassemble.GithubFeedbackForm.github_issue
+    ```
+    
 4. Optionally, create your own feedback.yml file. If you want a custom feedback.yml,
    it should look like this, with whatever customizations you choose:
 
