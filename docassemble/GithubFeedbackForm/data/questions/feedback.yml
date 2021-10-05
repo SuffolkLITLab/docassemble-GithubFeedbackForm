@@ -1,40 +1,8 @@
 ---
-comment: |
-  ########## How to use this file #################
-  
-  1. Create a new GitHub user and create a personal access token on it.
-  1. Edit your config, and create a block like this:
-        username: "YOUR_NEW_DEDICATED_ISSUE_CREATION_ACCOUNT"
-        token: "..." # A valid GitHub personal access token associated with the username above
-        default repository owner: YOUR_GITHUB_USER_OR_ORG_HERE
-        allowed repository owners: # List the repo that your account will be allowed to create issues on
-          - YOUR_GITHUB_USER_OR_ORG_HERE 
-          - SECOND_GITHUB_USER_OR_ORG
-  2. Add a link on each page, in the footer or `under` area.    
-  3. Optionally, create your own feedback.yml file. It should look like this:
-        include:
-          - docassemble.GithubFeedbackForm:feedback.yml
-        ---
-        code: |
-          al_feedback_form_title = "Your title here"  
-        ---
-        code: |
-          # This email will be used ONLY if there is no valid GitHub config
-          al_error_email = "Your error email here"
-        ---
-        template: al_how_to_get_legal_help
-        content: |
-          If you need more help, these are free resources:
-
-          ... [INCLUDE STATE-SPECIFIC RESOURCES]
-          
-          
-    You may also want to customize the metadata: title, and override any
-    specific questions.
-    
+modules:
+  - .github_issue
 ---
-code: |
-  al_feedback_form_title = "Court Forms Online"  
+code: al_feedback_form_title = "Court Forms Online"  
 ---
 code: |
   # This email will be used ONLY if there is no valid GitHub config
@@ -50,11 +18,45 @@ comment: |
   reset=1&
   from_list=1
 ---
-modules:
-  - .github_issue
+id: interview order
+mandatory: True
+code: |
+  intro
+  if reason == 'bug':
+    bug_details
+    issue_template = bug_report
+  elif reason == 'confusing':
+    confusing_details
+    issue_template = confusing_report
+  elif reason == 'else':
+    other_feedback
+    issue_template = other_feedback_report
+  elif reason == 'help':
+    gentle_exit
+  else:
+    value(reason)  
+    issue_template = generic_report[reason]
+  send_to_github
+  prevent_going_back()
+  store_variables_snapshot(persistent=True) # this is mostly just for backup reasons
+  end_results
 ---
 metadata:
   title: User Feedback
+  exit url: |
+    https://courtformsonline.org
+---
+image sets:
+  freepik:
+    attribution: |
+      Icon made by [Freepik](http://www.flaticon.com/authors/freepik)
+    images:
+      opinion: opinion.svg
+      bug: bug.svg
+      confusion: confusion.svg
+      lifebuoy: lifebuoy.svg
+      love: love.svg
+      enhancement: enhance.svg  
 ---
 # This is the repository that Github issue will be created on if
 # the repository is not passed as a URL argument
@@ -69,26 +71,6 @@ code: |
 features:
   labels above fields: True 
 ---
-mandatory: True
-code: |
-  intro
-  # Temporary override  
-  if reason == 'bug':
-    bug_details
-    issue_template = bug_report
-  elif reason == 'confusing':
-    confusing_details
-    issue_template = confusing_report
-  elif reason == 'else':
-    other_feedback
-    issue_template = other_feedback_report
-  elif reason == 'help':
-    gentle_exit
-  send_to_github
-  prevent_going_back()
-  store_variables_snapshot() # this is mostly just for backup reasons
-  end_results
----
 code: github_user = url_args.get('github_user', default_github_user_or_organization) or "suffolklitlab-issues"
 ---
 code: github_repo = url_args.get('github_repo', default_repository) or "demo"
@@ -97,17 +79,9 @@ code: variable = url_args.get('variable')
 ---
 code: question_id = url_args.get('question_id')
 ---
-code: |
-  if not task_performed('sent to github', persistent=True):
-    if github_user in allowed_github_users:
-      issue_url = make_github_issue(github_user, github_repo, template=issue_template)
-      if not issue_url and get_config('error notification email'):
-        log(f"Unable to create issue on repo {github_repo}, falling back to emailing {get_config('error notification email')}")
-        send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
-      elif not issue_url:
-        log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
-    mark_task_as_performed('sent to github', persistent=True)
-  send_to_github = True
+code: package_version = url_args.get('package_version')
+---
+code: filename = url_args.get('filename')
 ---
 id: intro
 question: |
@@ -120,6 +94,7 @@ subquestion: |
   ${ al_how_to_get_legal_help }
 
   Thank you for telling us about your experience with this website.
+  
 fields:
   - "**What would you like to tell us about?**": reason
     input type: radio
@@ -129,6 +104,148 @@ fields:
       - I'd like to tell you something else: else
       - I'm looking for more help: help      
 continue button field: intro  
+---
+if: |
+  get_config('debug')
+id: intro
+question: |
+  Tester feedback form
+decoration: opinion  
+subquestion: |
+  You accessed a form on a server in "debug" or test mode.
+  This form is designed to be used by testers and community
+  stakeholders. 
+  
+  The information you type here will be publicly available. That means anyone
+  will be able to see it. 
+  
+  It helps us to know how to prioritize your feedback. We use
+  a [5-level 
+  rating](https://suffolklitlab.org/legal-tech-class/docs/legal-tech-overview/maturity-model/#example-maturity-model-for-the-massaccess-project)
+  for our finished forms. Forms are usually 
+  ready to publish when they meet level 1, but all kinds of
+  feedback are valuable. Some forms will reach level 2-5 through 
+  iterative revision. Some will stay at level 1. Categorizing feedback
+  helps us choose the right tasks to work on in the right order.
+  
+  #### Description of levels
+  1. A user is able to correctly fill in the full form, like the paper form.
+      * 1.5 Eliminates compound question. First pass at plain language.
+  2. Similar to an intake with a new attorney
+  3. Similar to an intake with an experienced attorney
+  4. Provides substantial help and tailored resources in addition
+  to filling in the form.
+  
+  ${ feedback_link(user_info(), github_repo="docassemble-AssemblyLine")}
+  
+fields:
+  - "**What would you like to tell us about?**": reason
+    input type: radio
+    choices:
+      - Bug: bug
+      - Language fix: language
+      - Logic error: logic
+      - Confusing user experience: confusing
+      - Proposed enhancement: enhancement
+      - I have something else to tell you: else
+continue button field: intro  
+---
+variable name: maturity_levels
+data:
+  - Level 1 - this needs to be fixed to be equivalent to the blank form
+  - Level 1.5 - it works as-is, but this is a significant plain language issue
+  - Level 2 - this needs to be fixed to meet expectations of a basic intake
+  - Level 3 - this needs to be fixed to meet expectations of a sophisticated intake worker
+  - Level 4 - this is purely an enhancement to improve user experience
+---
+id: language fix
+question: |
+  Tell us about the language fix
+decoration: confusion
+fields:
+  - label: |
+      **What was the title at the top of the page where
+      the bug happened?**
+    field: page_title
+    show if:
+      code: |
+        not question_id    
+  - When should this fix be implemented?: maturity_level
+    code: maturity_levels
+    show if:
+      code: |
+        get_config('debug')
+  - Who are you? Just tell us your name or github username, not email. This will be public.: user_contact_info
+    show if:
+      code: |
+        get_config('debug')          
+  - label: |
+      **What language fix is needed? **
+    field: language
+    datatype: area
+    rows: 4
+  - label: |
+      **What else would you like to tell us?**
+    field: share_other_details   
+    datatype: area
+    required: False
+---
+id: logic fix
+question: |
+  Tell us about the logic error
+decoration: confusion
+fields:
+  - label: |
+      **What was the title at the top of the page where
+      the bug happened?**
+    field: page_title
+    show if:
+      code: |
+        not question_id    
+  - When should this fix be implemented?: maturity_level
+    code: maturity_levels
+    show if:
+      code: |
+        get_config('debug')
+  - Who are you? Just tell us your name or github username, not email. This will be public.: user_contact_info
+    show if:
+      code: |
+        get_config('debug')
+  - label: |
+      **What logic fix is needed? **
+    field: logic
+    datatype: area
+    rows: 4
+  - label: |
+      **What else would you like to tell us?**
+    field: share_other_details   
+    datatype: area
+    required: False
+---
+id: enhancement
+question: |
+  Tell us about the enhancement you propose
+decoration: enhancement
+fields:
+  - When should this fix be implemented?: maturity_level
+    code: maturity_levels
+    show if:
+      code: |
+        get_config('debug')
+  - Who are you? Just tell us your name or github username, not email. This will be public.: user_contact_info
+    show if:
+      code: |
+        get_config('debug')          
+  - label: |
+      **What enhancement do you propose? **
+    field: enhancement
+    datatype: area
+    rows: 4
+  - label: |
+      **What else would you like to tell us?**
+    field: share_other_details   
+    datatype: area
+    required: False
 ---
 template: al_how_to_get_legal_help
 content: |
@@ -198,12 +315,6 @@ subquestion: |
   type on this form will be visible on a public website.
 fields:
   - label: |
-      **What form were you using?**
-    field: form_title
-    show if:
-      code: |
-        github_repo == default_repository
-  - label: |
       **What was the title at the top of the page where
       the bug happened?**
     field: page_title
@@ -226,12 +337,6 @@ subquestion: |
   type on this form will be visible on a public website.
 fields:
   - label: |
-      **What form were you using?**
-    field: form_title
-    show if:
-      code: |
-        github_repo == default_repository
-  - label: |
       **What else would you like to tell us?**
     field: other_feedback   
     datatype: area
@@ -247,7 +352,6 @@ subquestion: |
 
 buttons:
   - Exit: exit
-    url: https://massaccess.suffolklitlab.org
 ---
 id: end_results
 event: end_results
@@ -262,7 +366,6 @@ subquestion: |
   % endif
 buttons:
   - Exit: exit
-    url: https://massaccess.suffolklitlab.org  
 ---
 template: bug_report
 subject: |
@@ -289,6 +392,12 @@ content: |
   % if variable:
   Variable being sought | ${ variable }
   % endif
+  % if package_version:
+  Package version | `${ package_version }`
+  % endif     
+  % if filename:
+  Filename | `${ filename }`
+  % endif
 ---
 template: confusing_report
 subject: |
@@ -311,6 +420,13 @@ content: |
   % if variable:
   Variable being sought | ${ variable }
   % endif  
+  % if package_version:
+  Package version | `${ package_version }`
+  % endif   
+  % if filename:
+  Filename | `${ filename }`
+  % endif
+  
 ---
 template: other_feedback_report
 subject: |
@@ -324,3 +440,60 @@ subject: |
 content: |
   ## User feedback:  
   ${ other_feedback }
+  % if package_version:
+  Package version | `${ package_version }`
+  % endif     
+  % if filename:
+  Filename | `${ filename }`
+  % endif
+---
+objects:
+  - generic_report: DADict
+---
+template: generic_report[i]
+subject: |
+  % if question_id:
+  ID ${ question_id }: 
+  % endif
+  Tester feedback: ${i}
+  % if variable:
+  (`${ variable }`)
+  % endif
+content: |
+  &nbsp; | &nbsp;
+  -------|------------------------------------
+  % if question_id:
+  Question ID | `${ question_id }`
+  % elif defined('page_title'): 
+  Page title | ${ page_title }
+  % endif  
+  ${i} | ${ value(i) }
+  Other information | ${ share_other_details }
+  % if variable:
+  Variable being sought | `${ variable }`
+  % endif  
+  % if package_version:
+  Package version | `${ package_version }`
+  % endif   
+  Maturity target | ${ maturity_level }
+  Tester contact info | ${ user_contact_info }
+  % if filename:
+  Filename | `${ filename }`
+  % endif  
+---
+########################## Send to GitHub code ##########################
+code: |
+  if not task_performed('sent to github', persistent=True):
+    if github_user in allowed_github_users:
+      issue_url = make_github_issue(github_user, github_repo, template=issue_template)
+      if not issue_url and al_error_email:
+        log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
+        send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
+      elif not issue_url:
+        log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+    else:
+      log(f"This form is not permitted to add issues on the {github_user} account. Check your config.")
+      log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
+      send_email(to=al_error_email, subject=f"{github_repo} -{issue_template.subject_as_html(trim=True)}", template=issue_template)
+    mark_task_as_performed('sent to github', persistent=True)
+  send_to_github = True  
