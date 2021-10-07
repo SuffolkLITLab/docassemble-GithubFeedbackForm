@@ -239,12 +239,11 @@ fields:
 template: al_how_to_get_legal_help
 content: |
   If you need more help, these are free resources:
+  
+  - [Find Free Legal help - Legal Services Corporation](https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help)
 
-  - For help with a non-criminal legal problem in Massachusetts, use the 
-  [Massachusetts Legal Resource Finder](http://masslegalhelp.org/find-legal-aid)
+  - [Hire a lawyer](https://www.americanbar.org/groups/legal_services/flh-home/flh-hire-a-lawyer/)
 
-  - If your income is low enough, try the [Mass Legal Answers Online](http://masslao.org/) website where volunteer lawyers answer questions
-  about your personal civil legal problems. 
 ---
 id: bug
 question: |
@@ -414,7 +413,6 @@ content: |
   % if filename:
   Filename | `${ filename }`
   % endif
-  
 ---
 template: other_feedback_report
 subject: |
@@ -463,8 +461,12 @@ content: |
   % if package_version:
   Package version | `${ package_version }`
   % endif   
+  % if defined('maturity_level'):
   Maturity target | ${ maturity_level }
+  % endif
+  % if defined('user_contact_info'):
   Tester contact info | ${ user_contact_info }
+  % endif
   % if filename:
   Filename | `${ filename }`
   % endif  
