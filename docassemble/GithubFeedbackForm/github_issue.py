@@ -139,10 +139,10 @@ def make_github_issue(repo_owner, repo_name, template=None, title=None, body=Non
 
     if label:
       labels_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels"
-      has_label_resp = requests.request("GET", labels_url + "/" + label, headers=headers)
+      has_label_resp = requests.get(labels_url + "/" + label, headers=headers)
       if has_label_resp.status_code == 404:
         label_data = {"name": label, "description": "Feedback from a Docassemble Interview", "color": "002E60"}
-        make_label_resp = requests.post(labels_url, data=label_data, headers=headers)
+        make_label_resp = requests.post(labels_url, data=json.dumps(label_data), headers=headers)
         if make_label_resp.status_code != 201:
           log(f'Was not able to find nor create the {label} label: {make_label_resp.content}')
           label = None
@@ -157,10 +157,8 @@ def make_github_issue(repo_owner, repo_name, template=None, title=None, body=Non
     if label:
       data['labels'] = [label]
 
-    payload = json.dumps(data)
-
     # Add the issue to our repository
-    response = requests.request("POST", make_issue_url, data=payload, headers=headers)
+    response = requests.post(make_issue_url, data=json.dumps(data), headers=headers)
     if response.status_code == 201:
         return response.json().get('html_url')
     else:
