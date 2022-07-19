@@ -24,7 +24,7 @@ code: |
   elif reason == 'help':
     gentle_exit
   else:
-    value(reason)  
+    value(reason)
     issue_template = generic_report[reason]
   send_to_github
   prevent_going_back()
@@ -72,6 +72,8 @@ code: question_id = url_args.get('question_id')
 code: package_version = url_args.get('package_version')
 ---
 code: filename = url_args.get('filename')
+---
+code: orig_session_id = url_args.get('session_id')
 ---
 id: intro
 question: |
@@ -279,17 +281,20 @@ fields:
     field: share_other_details   
     datatype: area
     required: False
-#  - label: |
-#      **Share my specific answers with an administrator**[BR]
-#      You can optionally share your answers on the online form with an
-#      administrator. Only two Suffolk University employees can view
-#      this information. It will not be made public.
-#      [BR]
-#      If you say no, it may be harder for us to track down the problem,
-#      but we will still try our best.
-#      We will not contact you either way.
-#    field: share_interview_answers
-#    datatype: yesnoradio
+  - label: |
+      **Share my specific answers with an administrator**[BR]
+      You can optionally share your answers on the online form with an
+      administrator. Only server administrators can view
+      this information. It will not be made public.
+      [BR]
+      If you say no, it may be harder for us to track down the problem,
+      but we will still try our best.
+      We will not contact you either way.
+    field: share_interview_answers
+    datatype: yesnoradio
+    show if:
+      code: |
+        server_share_answers
 ---
 id: confusing
 question: |
@@ -474,8 +479,12 @@ content: |
 ########################## Send to GitHub code ##########################
 code: |
   if not task_performed('sent to github', persistent=True):
+    if actually_share_answers:
+      saved_uuid
     if github_user in allowed_github_users:
-      issue_url = make_github_issue(github_user, github_repo, template=issue_template)
+      issue_url
+      if actually_share_answers and issue_url and saved_uuid:
+        set_session_github_url(saved_uuid, issue_url)
       if not issue_url and al_error_email:
         log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
         send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
@@ -486,4 +495,16 @@ code: |
       log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
       send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
     mark_task_as_performed('sent to github', persistent=True)
-  send_to_github = True  
+  send_to_github = True
+---
+code: |
+  saved_uuid = save_session_info(interview=filename, session_id=orig_session_id, template=issue_template)
+---
+code: |
+  issue_url = make_github_issue(github_user, github_repo, template=issue_template)
+---
+code: |
+  server_share_answers = get_config("allow_feedback_session_linking", False)
+---
+code: |
+  actually_share_answers = server_share_answers and (get_config('debug') or showifdef('share_interview_answers', False))

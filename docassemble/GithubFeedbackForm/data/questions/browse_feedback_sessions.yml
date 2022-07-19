@@ -1,0 +1,58 @@
+modules:
+  - .github_issue
+---
+objects:
+  - red: DARedis
+---
+mandatory: True
+code: |
+  feedback_guid
+  feedback_info
+---
+event: feedback_info
+question: Feedback Info
+subquestion: |
+  ## Body
+  ${ guid_map[feedback_guid].get('body') }
+
+  ## Github URL
+  ${ guid_map[feedback_guid].get('html_url') }
+
+  ## Session ID
+  ${ guid_map[feedback_guid].get('interview', '')}:${ guid_map[feedback_guid].get('session_id', '')}
+
+  ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
+---
+metadata:
+  title: Browse Feedback Sessions
+  short title: Browse Feedback
+  temporary session: True
+  required privileges:
+    - admin
+---
+if: guids
+id: main browse screen
+question: |
+  Select a feedback session to browse
+fields:
+  - Feedback GUID: feedback_guid
+    datatype: dropdown
+    choices:
+      code: |
+        guids
+---
+if: not guids
+question: |
+  No feedback sessions to view
+event: feedback_guid
+---
+code: |
+  guid_map = red.get_data(redis_feedback_key) or {}
+---
+code: |
+  guids = {guid: (info['html_url'] if 'html_url' in info else info.get('session_id') ) for guid, info in guid_map.items()}
+---
+event: open_session
+code: |
+  info = guid_map[feedback_guid]
+  response(url=interview_url(i=info['interview'], session=info['session_id'], temporary=1))
