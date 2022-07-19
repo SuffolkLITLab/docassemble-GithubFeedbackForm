@@ -294,7 +294,13 @@ fields:
     datatype: yesnoradio
     show if:
       code: |
-        server_share_answers
+        server_share_answers and not get_config('debug')
+  - note: |
+      Your answers will be shared with a server administrator to help
+      track down the problem. It will not be made public.
+    show if:
+      code: |
+        server_share_answers and get_config('debug')
 ---
 id: confusing
 question: |
@@ -504,7 +510,7 @@ code: |
   issue_url = make_github_issue(github_user, github_repo, template=issue_template)
 ---
 code: |
-  server_share_answers = get_config("allow_feedback_session_linking", False)
+  server_share_answers = get_config("allow feedback session linking", False)
 ---
 code: |
   actually_share_answers = server_share_answers and (get_config('debug') or showifdef('share_interview_answers', False))
