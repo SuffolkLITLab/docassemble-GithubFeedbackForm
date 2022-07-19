@@ -294,7 +294,13 @@ fields:
     datatype: yesnoradio
     show if:
       code: |
-        server_share_answers
+        server_share_answers and not get_config('debug')
+  - note: |
+      Your answers will be shared with a server administrator to help
+      track down the problem. It will not be made public.
+    show if:
+      code: |
+        server_share_answers and get_config('debug')
 ---
 id: confusing
 question: |
