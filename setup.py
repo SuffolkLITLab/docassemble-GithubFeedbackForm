@@ -53,7 +53,7 @@ setup(name='docassemble.GithubFeedbackForm',
       url='https://courtformsonline.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.ALToolbox'],
+      install_requires=[],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/GithubFeedbackForm/', package='docassemble.GithubFeedbackForm'),
      )
