@@ -97,7 +97,6 @@ def save_session_info(interview=None, session_id=None, template=None, body=None)
         guid_map = {}
 
       uuid_for_session = str(uuid.uuid4())
-      body += f'\nUID for Session: {uuid_for_session}'
       guid_map[uuid_for_session] = {'interview': interview, 'session_id': session_id, 'body': body}
       red.set_data(redis_feedback_key, guid_map)
       return uuid_for_session

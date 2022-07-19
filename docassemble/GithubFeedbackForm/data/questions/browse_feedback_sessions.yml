@@ -7,12 +7,21 @@ objects:
 mandatory: True
 code: |
   feedback_guid
-  tmp_screen
-  open_session
+  feedback_info
 ---
-question: tmp_screen
-continue button field: tmp_screen
+event: feedback_info
+question: Feedback Info
+subquestion: |
+  ## Body
+  ${ guid_map[feedback_guid].get('body') }
 
+  ## Github URL
+  ${ guid_map[feedback_guid].get('html_url') }
+
+  ## Session ID
+  ${ guid_map[feedback_guid].get('interview', '')}:${ guid_map[feedback_guid].get('session_id', '')}
+
+  ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
 metadata:
   title: Browse Feedback Sessions
@@ -31,7 +40,6 @@ fields:
     choices:
       code: |
         guids
-continue button label: Open Session
 ---
 if: not guids
 question: |
