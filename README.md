@@ -92,7 +92,8 @@ This package is designed to support the following workflow:
    any specific questions, add a logo, etc.
 
 5. If you enabled `feedback session linking` in the configuration, you can visit the
-   `https://myserverurl.com/start/GithubFeedbackForm/browse_feedback_sessions.yml` to view
+   `https://myserverurl.com/start/GithubFeedbackForm/browse_feedback_sessions` to view
+
    sessions that users agreed to link to their description of a bug, so you can reproduce the
    issue. This interview also will show you the list of emails of users who agreed to join a
    qualitative research panel.

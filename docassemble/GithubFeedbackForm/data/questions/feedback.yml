@@ -116,7 +116,7 @@ fields:
       variable: reason
       is: something
   - label: |
-      **Would you like to be contacted to be a part of user feedback panel?**
+      **Would you like to be contacted to be a part of a user feedback panel?**
     field: would_be_on_panel
     datatype: yesnoradio
     show if:
