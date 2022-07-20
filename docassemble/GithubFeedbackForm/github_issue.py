@@ -118,7 +118,7 @@ def set_session_github_url(uuid_for_session:str, github_url:str) -> bool:
       log(f'Cannot find {uuid_for_session} in redis DB')
       return False
 
-def make_github_issue(repo_owner, repo_name, template=None, title=None, body=None) -> Optional[str]:
+def make_github_issue(repo_owner, repo_name, template=None, title=None, body=None, label=None) -> Optional[str]:
     """
     Create a new Github issue and return the URL.
 
@@ -126,7 +126,7 @@ def make_github_issue(repo_owner, repo_name, template=None, title=None, body=Non
     title - the title for the github issue
     body - the body of the github issue
     """
-    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
+    make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
     # Headers
     if not TOKEN:
       log("Error creating issues: No valid GitHub token provided.")
@@ -136,7 +136,17 @@ def make_github_issue(repo_owner, repo_name, template=None, title=None, body=Non
         "Authorization": "token %s" % TOKEN,
         "Accept": "application/vnd.github.v3+json"
     }
-    
+
+    if label:
+      labels_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels"
+      has_label_resp = requests.get(labels_url + "/" + label, headers=headers)
+      if has_label_resp.status_code == 404:
+        label_data = {"name": label, "description": "Feedback from a Docassemble Interview", "color": "002E60"}
+        make_label_resp = requests.post(labels_url, data=json.dumps(label_data), headers=headers)
+        if make_label_resp.status_code != 201:
+          log(f'Was not able to find nor create the {label} label: {make_label_resp.content}')
+          label = None
+
     if template:
       title = template.subject
       body = template.content
@@ -144,11 +154,11 @@ def make_github_issue(repo_owner, repo_name, template=None, title=None, body=Non
     data = {'title': title,
             'body': body,
            }
-
-    payload = json.dumps(data)
+    if label:
+      data['labels'] = [label]
 
     # Add the issue to our repository
-    response = requests.request("POST", url, data=payload, headers=headers)
+    response = requests.post(make_issue_url, data=json.dumps(data), headers=headers)
     if response.status_code == 201:
         return response.json().get('html_url')
     else:

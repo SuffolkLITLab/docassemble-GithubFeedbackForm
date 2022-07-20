@@ -289,10 +289,13 @@ code: |
   saved_uuid = save_session_info(interview=filename, session_id=orig_session_id, template=issue_template)
 ---
 code: |
-  issue_url = make_github_issue(github_user, github_repo, template=issue_template)
+  issue_url = make_github_issue(github_user, github_repo, template=issue_template, label=github_label)
 ---
 code: |
   server_share_answers = get_config("allow feedback session linking", False)
 ---
 code: |
   actually_share_answers = server_share_answers and (get_config('debug') or showifdef('share_interview_answers', False))
+---
+code: |
+  github_label = 'user feedback'
