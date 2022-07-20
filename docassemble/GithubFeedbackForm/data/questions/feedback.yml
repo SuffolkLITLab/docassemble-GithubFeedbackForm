@@ -95,6 +95,22 @@ fields:
     show if:
       variable: reason
       is: something
+  - label: |
+      **Share my specific answers with an administrator**[BR]
+      You can optionally share your answers on the online form with an
+      administrator. Only server administrators can view
+      this information. It will not be made public.
+      [BR]
+      If you say no, it may be harder for us to track down the problem,
+      but we will still try our best.
+      We will not contact you either way.
+    field: share_interview_answers
+    datatype: yesnoradio
+    show if:
+      code: |
+        server_share_answers and not get_config('debug')
+      variable: reason
+      is: something
 continue button field: intro
 ---
 if: |
@@ -105,10 +121,10 @@ question: |
 decoration: opinion
 subquestion: |
   This form is designed to be used by testers and community
-  stakeholders. 
+  stakeholders.
   
   The information you type here will be publicly available. That means anyone
-  will be able to see it. 
+  will be able to see it.
   
   ${ collapse_template(al_how_to_get_legal_help) }
   
@@ -158,28 +174,12 @@ fields:
     show if:
       variable: reason
       is: something
-  - label: |
-      **Share my specific answers with an administrator**[BR]
-      You can optionally share your answers on the online form with an
-      administrator. Only server administrators can view
-      this information. It will not be made public.
-      [BR]
-      If you say no, it may be harder for us to track down the problem,
-      but we will still try our best.
-      We will not contact you either way.
-    field: share_interview_answers
-    datatype: yesnoradio
-    show if:
-      code: |
-        server_share_answers and not get_config('debug')
-      variable: reason
-      is: bug
   - note: |
       Your answers will be shared with a server administrator to help
       track down the problem. It will not be made public.
     show if:
       code: |
-        server_share_answers and get_config('debug')
+        server_share_answers
       variable: reason
       is: bug
 continue button field: intro
