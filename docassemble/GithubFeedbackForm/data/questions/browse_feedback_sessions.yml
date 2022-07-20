@@ -44,11 +44,15 @@ help:
   label: |
     View Panelists
   content: |
-    % for panelist_email in potential_panelists():
-    % if isinstance(panelist_email, bytes):
-    * ${ panelist_email.decode('utf-8') }
+    ${ view_panelists }
+---
+template: view_panelists
+content: |
+    % for email_and_time in potential_panelists():
+    % if isinstance(email_and_time[0], bytes):
+    * ${ email_and_time[0].decode('utf-8') }, at ${ email_and_time[1]}
     % else:
-    * ${ str(panelist_email) }
+    * ${ str(panelist_email) }, at ${ email_and_time[1]}
     % endif
     % endfor
 ---
@@ -56,6 +60,11 @@ if: not guids
 question: |
   No feedback sessions to view
 event: feedback_guid
+help:
+  label: |
+    View Panelists
+  content: |
+    ${ view_panelists }
 ---
 code: |
   guid_map = red.get_data(redis_feedback_key) or {}
