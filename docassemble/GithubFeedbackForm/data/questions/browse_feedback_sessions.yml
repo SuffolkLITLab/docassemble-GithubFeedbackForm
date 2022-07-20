@@ -40,6 +40,17 @@ fields:
     choices:
       code: |
         guids
+help:
+  label: |
+    View Panelists
+  content: |
+    % for panelist_email in potential_panelists():
+    % if isinstance(panelist_email, bytes):
+    * ${ panelist_email.decode('utf-8') }
+    % else:
+    * ${ str(panelist_email) }
+    % endif
+    % endfor
 ---
 if: not guids
 question: |
