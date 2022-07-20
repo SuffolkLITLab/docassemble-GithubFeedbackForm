@@ -91,7 +91,7 @@ def feedback_link(user_info_object=None,
 ############################################
 ## Panel particitpants are managed through a Redis ZSet (a sorted/scored set).
 ## The score is the timestamp of when they responded, so we can fetch newer
-## respondants (more likely to accept a follow up interview).
+## respondents (more likely to accept a follow up interview).
 ## https://redis.io/docs/manual/data-types/#sorted-sets
 
 def add_panel_participant(email:str):
