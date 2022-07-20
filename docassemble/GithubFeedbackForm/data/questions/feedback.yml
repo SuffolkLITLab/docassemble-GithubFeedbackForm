@@ -56,6 +56,10 @@ code: |
 code: |
   allowed_github_users = get_config('github issues',{}).get('allowed repository owners') or ["suffolklitlab","suffolklitlab-issues"]
 ---
+code: server_share_answers = get_config("github issues", {}).get("feedback session linking", False)
+---
+code: server_ask_panel = get_config("github issues", {}).get("ask panel", False)
+---
 code: github_user = url_args.get('github_user', default_github_user_or_organization) or "suffolklitlab-issues"
 ---
 code: github_repo = url_args.get('github_repo', default_repository) or "demo"
@@ -111,6 +115,23 @@ fields:
         server_share_answers and not get_config('debug')
       variable: reason
       is: something
+  - label: |
+      **Would you like to be contacted to be a part of a user feedback panel?**
+    field: would_be_on_panel
+    datatype: yesnoradio
+    show if:
+      code: |
+        server_ask_panel and not get_config('debug')
+      variable: reason
+      is: something
+  - label: |
+      **What is your email?**
+    field: panel_email
+    datatype: email
+    default: ${ user_info().email }
+    show if:
+      variable: would_be_on_panel
+      is: True
 continue button field: intro
 ---
 if: |
@@ -269,6 +290,8 @@ code: |
   if not task_performed('sent to github', persistent=True):
     if actually_share_answers:
       saved_uuid
+    if showifdef('would_be_on_panel', False):
+      add_panel_participant(panel_email)
     if github_user in allowed_github_users:
       issue_url
       if actually_share_answers and issue_url and saved_uuid:
@@ -289,13 +312,10 @@ code: |
   saved_uuid = save_session_info(interview=filename, session_id=orig_session_id, template=issue_template)
 ---
 code: |
-  issue_url = make_github_issue(github_user, github_repo, template=issue_template, label=github_label)
----
-code: |
-  server_share_answers = get_config("allow feedback session linking", False)
+  issue_url = make_github_issue(github_user, github_repo, template=issue_template, label=al_github_label)
 ---
 code: |
   actually_share_answers = server_share_answers and (get_config('debug') or showifdef('share_interview_answers', False))
 ---
 code: |
-  github_label = 'user feedback'
+  al_github_label = 'user feedback'
