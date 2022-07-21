@@ -5,17 +5,29 @@ modules:
 include:
   - docassemble.ALToolbox:reaction_widget.yml
 ---
+code: did_react = False
+---
 event: thumbs_up_feedback_event
 code: |
   reaction_val = 1
+  did_react = True
   save_good_or_bad(reaction_val, user_info_object=user_info())
 ---
 event: thumbs_down_feedback_event
 code: |
   reaction_val = -1
+  did_react = True
   save_good_or_bad(reaction_val, user_info_object=user_info())
 ---
 event: feedback_text_event
 code: |
   feedback_text = action_argument('feedback_text')
+  did_react = True
   save_feedback_info(user_info().filename, body=feedback_text)
+---
+code: |
+  def only_once_reaction_widget(**kwargs):
+    if not did_react:
+      return reaction_widget(**kwargs)
+    else:
+      return ""
