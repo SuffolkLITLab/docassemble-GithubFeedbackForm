@@ -6,8 +6,12 @@ objects:
 ---
 mandatory: True
 code: |
-  feedback_id
-  feedback_info
+  feedback_type
+  if feedback_type == 'reactions':
+    reaction_summary
+  elif feedback_type == 'separate_interview':
+    feedback_id
+    feedback_info
 ---
 event: feedback_info
 question: Feedback Info
@@ -23,6 +27,20 @@ subquestion: |
 
   ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
+event: reaction_summary
+question: |
+  Reaction Summary
+subquestion: |
+  ## Reactions
+  % for reaction in get_good_or_bad():
+  * ${ reaction }
+  % endfor
+
+  ## Text Feedback
+  % for feedback in [info for row_id, info in id_map.items() if not info.get('session_id')]:
+  * "${ feedback['body'] }", on ${ feedback['interview'] }
+  % endfor
+---
 metadata:
   title: Browse Interview Feedback
   short title: Browse Feedback
@@ -35,11 +53,19 @@ id: main browse screen
 question: |
   Select feedback to browse
 fields:
+  - What type of feedback: feedback_type
+    datatype: dropdown
+    choices:
+      Reactions: reactions
+      User-initiated: separate_interview
   - Feedback Session: feedback_id
     datatype: dropdown
     choices:
       code: |
         ids
+    show if:
+      variable: feedback_type
+      is: separate_interview
 help:
   label: |
     View Panelists

@@ -1,0 +1,21 @@
+---
+modules:
+  - .feedback_on_server
+---
+include:
+  - docassemble.ALToolbox:reaction_widget.yml
+---
+event: thumbs_up_feedback_event
+code: |
+  reaction_val = 1
+  save_good_or_bad(reaction_val, user_info_object=user_info())
+---
+event: thumbs_down_feedback_event
+code: |
+  reaction_val = -1
+  save_good_or_bad(reaction_val, user_info_object=user_info())
+---
+event: feedback_text_event
+code: |
+  feedback_text = action_argument('feedback_text')
+  save_feedback_info(user_info().filename, body=feedback_text)
