@@ -1,23 +1,18 @@
 import importlib
 import json
 import requests
-import uuid
-from typing import Optional, Iterable, Tuple
-from datetime import datetime
-from docassemble.base.util import log, get_config, interview_url, DARedis
+from typing import Optional
+from docassemble.base.util import log, get_config, interview_url
 
 # reference: https://gist.github.com/JeffPaine/3145490
 # https://docs.github.com/en/free-pro-team@latest/rest/reference/issues#create-an-issue
 
 # Authentication for user filing issue (must have read/write access to
 # repository to add issue to)
-__all__ = ['valid_github_issue_config', 'make_github_issue', 'save_session_info', 
-    'set_session_github_url', 'feedback_link', 'redis_feedback_key', 'add_panel_participant', 'potential_panelists']
+__all__ = ['valid_github_issue_config', 'make_github_issue',
+    'feedback_link']
 USERNAME = get_config('github issues',{}).get('username')
 TOKEN = get_config('github issues',{}).get('token')
-
-redis_feedback_key = 'docassemble-GithubFeedbackForm:feedback_info'
-redis_panel_emails_key = 'docassemble-GithubFeedbackForm:panel_emails'
 
 def valid_github_issue_config():
   return bool(TOKEN)
@@ -87,56 +82,6 @@ def feedback_link(user_info_object=None,
     filename=_filename,
     session_id=_session_id,
     local=False,reset=1)
-
-############################################
-## Panel particitpants are managed through a Redis ZSet (a sorted/scored set).
-## The score is the timestamp of when they responded, so we can fetch newer
-## respondents (more likely to accept a follow up interview).
-## https://redis.io/docs/manual/data-types/#sorted-sets
-
-def add_panel_participant(email:str):
-    """Adds this email to a list of potential participants for a qualitative research panel.
-    Adds the email and when they responded, as we shouldn't link their feedback to their identity at all.
-    """
-    red = DARedis()
-    red.zadd(redis_panel_emails_key, {email: datetime.now().timestamp()})
-
-def potential_panelists() -> Iterable[Tuple[str, datetime]]:
-    red = DARedis()
-    return [(item, datetime.fromtimestamp(score)) for item, score in red.zrange(redis_panel_emails_key, 0, -1, withscores=True)]
-
-def save_session_info(interview=None, session_id=None, template=None, body=None) -> Optional[str]:
-    """Saves session information along with the feedback in a redis DB"""
-    if template:
-      body = template.content
-
-    if interview and session_id:
-      red = DARedis()
-      guid_map = red.get_data(redis_feedback_key)
-      if not guid_map:
-        guid_map = {}
-
-      uuid_for_session = str(uuid.uuid4())
-      guid_map[uuid_for_session] = {'interview': interview, 'session_id': session_id, 'body': body}
-      red.set_data(redis_feedback_key, guid_map)
-      return uuid_for_session
-    else: # can happen if the forwarding interview didn't pass session info
-      return None
-
-def set_session_github_url(uuid_for_session:str, github_url:str) -> bool:
-    """Returns true if save was successful"""
-    red = DARedis()
-    guid_map = red.get_data(redis_feedback_key)
-    if not guid_map:
-      guid_map = {}
-
-    if uuid_for_session in guid_map:
-      guid_map[uuid_for_session]['html_url'] = github_url
-      red.set_data(redis_feedback_key, guid_map)
-      return True
-    else:
-      log(f'Cannot find {uuid_for_session} in redis DB')
-      return False
 
 def make_github_issue(repo_owner, repo_name, template=None, title=None, body=None, label=None) -> Optional[str]:
     """

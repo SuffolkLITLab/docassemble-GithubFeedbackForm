@@ -1,45 +1,45 @@
 modules:
-  - .github_issue
+  - .feedback_on_server
 ---
 objects:
   - red: DARedis
 ---
 mandatory: True
 code: |
-  feedback_guid
+  feedback_id
   feedback_info
 ---
 event: feedback_info
 question: Feedback Info
 subquestion: |
   ## Body
-  ${ guid_map[feedback_guid].get('body') }
+  ${ id_map[feedback_id]['body'] }
 
   ## Github URL
-  ${ guid_map[feedback_guid].get('html_url') }
+  ${ id_map[feedback_id]['html_url'] }
 
   ## Session ID
-  ${ guid_map[feedback_guid].get('interview', '')}:${ guid_map[feedback_guid].get('session_id', '')}
+  ${ id_map[feedback_id]['interview'] }:${ id_map[feedback_id]['session_id'] }
 
   ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
 metadata:
-  title: Browse Feedback Sessions
+  title: Browse Interview Feedback
   short title: Browse Feedback
   temporary session: True
   required privileges:
     - admin
 ---
-if: guids
+if: ids
 id: main browse screen
 question: |
-  Select a feedback session to browse
+  Select feedback to browse
 fields:
-  - Feedback GUID: feedback_guid
+  - Feedback Session: feedback_id
     datatype: dropdown
     choices:
       code: |
-        guids
+        ids
 help:
   label: |
     View Panelists
@@ -56,10 +56,10 @@ content: |
     % endif
     % endfor
 ---
-if: not guids
+if: not ids
 question: |
-  No feedback sessions to view
-event: feedback_guid
+  No feedback to view
+event: feedback_id
 help:
   label: |
     View Panelists
@@ -67,12 +67,13 @@ help:
     ${ view_panelists }
 ---
 code: |
-  guid_map = red.get_data(redis_feedback_key) or {}
+  id_map = get_all_feedback_info()
 ---
 code: |
-  guids = {guid: (info['html_url'] if 'html_url' in info else info.get('session_id') ) for guid, info in guid_map.items()}
+  ids = {row_id: info['html_url'] if info.get('html_url') else info.get('session_id') 
+      for row_id, info in id_map.items() if info.get('session_id')}
 ---
 event: open_session
 code: |
-  info = guid_map[feedback_guid]
+  info = id_map[feedback_id]
   response(url=interview_url(i=info['interview'], session=info['session_id'], temporary=1))
