@@ -1,10 +1,10 @@
 ---
 modules:
   - .github_issue
+  - .feedback_on_server
 ---
 include:
   - docassemble.ALToolbox:collapse_template.yml
----
 ---
 metadata:
   title: User Feedback
@@ -15,7 +15,7 @@ features:
   labels above fields: True
   question back button: True
 ---
-code: al_feedback_form_title = "Court Forms Online"  
+code: al_feedback_form_title = "Court Forms Online"
 ---
 code: |
   # This email will be used ONLY if there is no valid GitHub config
@@ -295,7 +295,7 @@ code: |
     if github_user in allowed_github_users:
       issue_url
       if actually_share_answers and issue_url and saved_uuid:
-        set_session_github_url(saved_uuid, issue_url)
+        set_feedback_github_url(saved_uuid, issue_url)
       if not issue_url and al_error_email:
         log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
         send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
@@ -309,7 +309,7 @@ code: |
   send_to_github = True
 ---
 code: |
-  saved_uuid = save_session_info(interview=filename, session_id=orig_session_id, template=issue_template)
+  saved_uuid = save_feedback_info(interview=filename, session_id=orig_session_id, template=issue_template)
 ---
 code: |
   issue_url = make_github_issue(github_user, github_repo, template=issue_template, label=al_github_label)

@@ -1,26 +1,18 @@
 import importlib
 import json
 import requests
-import uuid
-from typing import Optional, Iterable, Tuple
-from datetime import datetime
-from sqlalchemy import insert, update, select, text, Table, Column, String, Integer, MetaData, create_engine
-from docassemble.base.util import log, get_config, interview_url, DARedis
-from docassemble.base.sql import alchemy_url
+from typing import Optional
+from docassemble.base.util import log, get_config, interview_url
 
 # reference: https://gist.github.com/JeffPaine/3145490
 # https://docs.github.com/en/free-pro-team@latest/rest/reference/issues#create-an-issue
 
 # Authentication for user filing issue (must have read/write access to
 # repository to add issue to)
-__all__ = ['valid_github_issue_config', 'make_github_issue', 'save_session_info',
-    'set_session_github_url', 'feedback_link', 'redis_feedback_key', 'add_panel_participant',
-    'potential_panelists', 'get_all_session_info']
+__all__ = ['valid_github_issue_config', 'make_github_issue',
+    'feedback_link']
 USERNAME = get_config('github issues',{}).get('username')
 TOKEN = get_config('github issues',{}).get('token')
-
-redis_feedback_key = 'docassemble-GithubFeedbackForm:feedback_info'
-redis_panel_emails_key = 'docassemble-GithubFeedbackForm:panel_emails'
 
 def valid_github_issue_config():
   return bool(TOKEN)
@@ -90,79 +82,6 @@ def feedback_link(user_info_object=None,
     filename=_filename,
     session_id=_session_id,
     local=False,reset=1)
-
-############################################
-## Panel particitpants are managed through a Redis ZSet (a sorted/scored set).
-## The score is the timestamp of when they responded, so we can fetch newer
-## respondents (more likely to accept a follow up interview).
-## https://redis.io/docs/manual/data-types/#sorted-sets
-
-def add_panel_participant(email:str):
-    """Adds this email to a list of potential participants for a qualitative research panel.
-    Adds the email and when they responded, as we shouldn't link their feedback to their identity at all.
-    """
-    red = DARedis()
-    red.zadd(redis_panel_emails_key, {email: datetime.now().timestamp()})
-
-def potential_panelists() -> Iterable[Tuple[str, datetime]]:
-    red = DARedis()
-    return [(item, datetime.fromtimestamp(score)) for item, score in red.zrange(redis_panel_emails_key, 0, -1, withscores=True)]
-
-###################################
-## Using SQLAlchemy to save / retrieve session information that is linked
-## to specific feedback issues
-
-db_url = alchemy_url('db')
-engine = create_engine(db_url)
-
-metadata_obj = MetaData()
-
-feedback_session_table = Table(
-  "feedback_session",
-  metadata_obj,
-  Column('id', Integer, primary_key=True),
-  Column('interview', String, nullable=False),
-  Column('session_id', String, nullable=False),
-  Column('body', String),
-  Column('html_url', String)
-)
-
-metadata_obj.create_all(engine)
-
-def save_session_info(interview=None, session_id=None, template=None, body=None) -> Optional[str]:
-    """Saves session information along with the feedback in a redis DB"""
-    if template:
-      body = template.content
-
-    if interview and session_id:
-      stmt = insert(feedback_session_table).values(interview=interview, session_id=session_id, body=body)
-      with engine.begin() as conn:
-        result = conn.execute(stmt)
-        id_for_session = result.inserted_primary_key[0]
-
-      return id_for_session
-    else: # can happen if the forwarding interview didn't pass session info
-      return None
-
-def set_session_github_url(id_for_session:str, github_url:str) -> bool:
-    """Returns true if save was successful"""
-    stmt = update(feedback_session_table).where(feedback_session_table.c.id == id_for_session).values(html_url=github_url)
-    with engine.begin() as conn:
-      result = conn.execute(stmt)
-    if result.rowcount == 0:
-      log(f'Cannot find {id_for_session} in redis DB')
-      return False
-    return True
-
-def get_all_session_info(interview=None) -> Iterable:
-    if interview:
-        stmt = select(feedback_session_table).where(feedback_session_table.c.interview == interview)
-    else:
-        stmt = select(feedback_session_table)
-    with engine.begin() as conn:
-        results = conn.execute(stmt)
-        # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL
-        return {str(row['id']): dict(row) for row in results.mappings()}
 
 def make_github_issue(repo_owner, repo_name, template=None, title=None, body=None, label=None) -> Optional[str]:
     """

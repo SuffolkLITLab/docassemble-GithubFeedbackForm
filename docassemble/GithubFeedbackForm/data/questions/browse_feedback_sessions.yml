@@ -1,5 +1,5 @@
 modules:
-  - .github_issue
+  - .feedback_on_server
 ---
 objects:
   - red: DARedis
@@ -24,7 +24,7 @@ subquestion: |
   ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
 metadata:
-  title: Browse Feedback Sessions
+  title: Browse Interview Feedback
   short title: Browse Feedback
   temporary session: True
   required privileges:
@@ -33,7 +33,7 @@ metadata:
 if: ids
 id: main browse screen
 question: |
-  Select a feedback session to browse
+  Select feedback to browse
 fields:
   - Feedback Session: feedback_id
     datatype: dropdown
@@ -58,7 +58,7 @@ content: |
 ---
 if: not ids
 question: |
-  No feedback sessions to view
+  No feedback to view
 event: feedback_id
 help:
   label: |
@@ -67,10 +67,11 @@ help:
     ${ view_panelists }
 ---
 code: |
-  id_map = get_all_session_info()
+  id_map = get_all_feedback_info()
 ---
 code: |
-  ids = {row_id: info['html_url'] if info.get('html_url') else info.get('session_id') for row_id, info in id_map.items()}
+  ids = {row_id: info['html_url'] if info.get('html_url') else info.get('session_id') 
+      for row_id, info in id_map.items() if info.get('session_id')}
 ---
 event: open_session
 code: |
