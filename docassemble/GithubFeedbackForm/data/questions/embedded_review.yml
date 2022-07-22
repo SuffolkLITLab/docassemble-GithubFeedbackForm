@@ -1,0 +1,39 @@
+---
+modules:
+  - .feedback_on_server
+---
+include:
+  - docassemble.ALToolbox:review_widget.yml
+---
+code: did_react = False
+---
+event: thumbs_up_review_event
+code: |
+  reaction_val = 1
+  did_react = True
+  save_good_or_bad(reaction_val, user_info_object=user_info())
+---
+event: thumbs_down_review_event
+code: |
+  reaction_val = -1
+  did_react = True
+  save_good_or_bad(reaction_val, user_info_object=user_info())
+---
+event: review_text_event
+code: |
+  review_text = action_argument('review_text')
+  did_react = True
+  save_feedback_info(user_info().filename, body=review_text)
+---
+code: |
+  def only_once_review_widget(
+      up_action="thumbs_up_review_event",
+      down_action="thumbs_down_review_event",
+      review_action="review_text_event",
+      **kwargs):
+    if not did_react:
+      return review_widget(
+          up_action=up_action, down_action=down_action,
+          review_action=review_action, **kwargs)
+    else:
+      return ""

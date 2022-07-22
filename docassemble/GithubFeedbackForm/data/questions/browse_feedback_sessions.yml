@@ -7,8 +7,8 @@ objects:
 mandatory: True
 code: |
   feedback_type
-  if feedback_type == 'reactions':
-    reaction_summary
+  if feedback_type == 'reviews':
+    review_summary
   elif feedback_type == 'separate_interview':
     feedback_id
     feedback_info
@@ -27,16 +27,16 @@ subquestion: |
 
   ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
-event: reaction_summary
+event: review_summary
 question: |
-  Reaction Summary
+  Review Summary
 subquestion: |
-  ## Reactions
-  % for reaction in get_good_or_bad():
-  * ${ reaction }
+  ## Reviews
+  % for review_agg in get_good_or_bad():
+  * ${ review_agg }
   % endfor
 
-  ## Text Feedback
+  ## Text Reviews
   % for feedback in [info for row_id, info in id_map.items() if not info.get('session_id')]:
   * "${ feedback['body'] }", on ${ feedback['interview'] }
   % endfor
@@ -56,8 +56,8 @@ fields:
   - What type of feedback: feedback_type
     datatype: dropdown
     choices:
-      Reactions: reactions
-      User-initiated: separate_interview
+      Reviews: reviews
+      Feedback: separate_interview
   - Feedback Session: feedback_id
     datatype: dropdown
     choices:
