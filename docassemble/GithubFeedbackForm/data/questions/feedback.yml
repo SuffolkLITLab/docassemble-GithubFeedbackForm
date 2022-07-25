@@ -99,31 +99,43 @@ fields:
     show if:
       variable: reason
       is: something
-  - label: |
-      **Share my specific answers with an administrator**[BR]
-      You can optionally share your answers on the online form with an
-      administrator. Only server administrators can view
-      this information. It will not be made public.
+  - note: |
+      If you ran into a bug, you can share your answers with
+      an administrator (they will not be made public) to help us
+      track down the problem.
       [BR]
-      If you say no, it may be harder for us to track down the problem,
-      but we will still try our best.
       We will not contact you either way.
-    field: share_interview_answers
-    datatype: yesnoradio
     show if:
       code: |
         server_share_answers and not get_config('debug')
       variable: reason
       is: something
   - label: |
-      **Would you like to be contacted to be a part of a user feedback panel?**
+      Share my answers with an administrator
+    label above field: False
+    field: share_interview_answers
+    datatype: yesno
+    show if:
+      code: |
+        server_share_answers and not get_config('debug')
+      variable: reason
+      is: something
+  - label: |
+      I am interested in being a part of a user feedback panel
+    label above field: False
     field: would_be_on_panel
-    datatype: yesnoradio
+    datatype: yesno
+    default: False
     show if:
       code: |
         server_ask_panel and not get_config('debug')
       variable: reason
       is: something
+  - note: |
+      We will contact you for the feedback panel by email.
+    show if:
+      variable: would_be_on_panel
+      is: True
   - label: |
       **What is your email?**
     field: panel_email
