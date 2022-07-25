@@ -8,7 +8,7 @@ from docassemble.base.util import DARedis, log
 from docassemble.base.sql import alchemy_url
 
 __all__ = ['save_feedback_info', 'set_feedback_github_url', 'redis_panel_emails_key', 'add_panel_participant',
-    'potential_panelists', 'get_all_feedback_info']
+    'potential_panelists', 'get_all_feedback_info', 'save_good_or_bad', 'get_good_or_bad']
 
 redis_panel_emails_key = 'docassemble-GithubFeedbackForm:panel_emails'
 
@@ -50,6 +50,15 @@ feedback_session_table = Table(
   Column('html_url', String)
 )
 
+good_or_bad_table = Table(
+  "good_or_bad",
+  metadata_obj,
+  Column('reaction', Integer),
+  Column('interview', String),
+  Column('version', String),
+  Column('datetime', DateTime)
+)
+
 metadata_obj.create_all(engine)
 
 def save_feedback_info(interview, *, session_id=None, template=None, body=None) -> Optional[str]:
@@ -86,3 +95,38 @@ def get_all_feedback_info(interview=None) -> Iterable:
         results = conn.execute(stmt)
         # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL
         return {str(row['id']): dict(row) for row in results.mappings()}
+
+def save_good_or_bad(reaction:int, *, user_info_object=None, interview:str=None, version:str=None):
+    """Saves a user's reaction to an interview, in the form of an int (0 being
+    neutral, positive numbers being good, and negative numbers being bad)"""
+    _package_version = None
+    _interview = None
+    if user_info_object:
+      _interview = user_info_object.filename
+      try:
+        _package_version = str(importlib.import_module(user_info_object.package).__verison__)
+      except:
+        _package_version = "playground"
+
+    if interview:
+      _interview = interview
+    if version:
+      _package_version = version
+
+    stmt = insert(good_or_bad_table).values(reaction=reaction, interview=_interview,
+        version=_package_version, datetime=datetime.now())
+    with engine.begin() as conn:
+      conn.execute(stmt)
+
+def get_good_or_bad(interview:str=None):
+    """Retrieves user's aggregate reactions to an interview (how many reactions
+    and the average score of them), grouped by interview and package verison"""
+    stmt = select(good_or_bad_table.c.interview, good_or_bad_table.c.version,
+        func.count().label("count"), func.avg(good_or_bad_table.c.reaction).label("average"))
+    if interview:
+      stmt = stmt.where(good_or_bad_table.c.interview == interview)
+    stmt = stmt.group_by(good_or_bad_table.c.interview, good_or_bad_table.c.version)
+    with engine.begin() as conn:
+        results = conn.execute(stmt)
+        return [dict(row) for row in results.mappings()]
+

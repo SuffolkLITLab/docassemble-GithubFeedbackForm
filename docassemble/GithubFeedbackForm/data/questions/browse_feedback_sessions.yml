@@ -6,8 +6,12 @@ objects:
 ---
 mandatory: True
 code: |
-  feedback_id
-  feedback_info
+  feedback_type
+  if feedback_type == 'reviews':
+    review_summary
+  elif feedback_type == 'separate_interview':
+    feedback_id
+    feedback_info
 ---
 event: feedback_info
 question: Feedback Info
@@ -23,6 +27,31 @@ subquestion: |
 
   ${ action_button_html(url_action('open_session'), label='Open Session', color='secondary') }
 ---
+event: review_summary
+question: |
+  Review Summary
+subquestion: |
+  ## Reviews
+  % for review_agg in get_good_or_bad():
+  <h3 class="h5">${ review_agg['interview'] } </h3>
+  version: ${ review_agg['version'] }
+
+  * count: ${ review_agg['count'] }
+  * average: ${ str(round(review_agg['average'] * 1000)/1000) }
+  % endfor
+
+  ## Text Reviews
+  % for interview, review_list in text_reviews.items():
+  <h3 class="h5">In ${ interview }</h3>
+  % for review in review_list:
+  > ${ review['body'] }
+
+  ---
+
+  % endfor
+
+  % endfor
+---
 metadata:
   title: Browse Interview Feedback
   short title: Browse Feedback
@@ -35,11 +64,19 @@ id: main browse screen
 question: |
   Select feedback to browse
 fields:
+  - What type of feedback: feedback_type
+    datatype: dropdown
+    choices:
+      Reviews: reviews
+      Feedback: separate_interview
   - Feedback Session: feedback_id
     datatype: dropdown
     choices:
       code: |
         ids
+    show if:
+      variable: feedback_type
+      is: separate_interview
 help:
   label: |
     View Panelists
@@ -72,6 +109,15 @@ code: |
 code: |
   ids = {row_id: info['html_url'] if info.get('html_url') else info.get('session_id') 
       for row_id, info in id_map.items() if info.get('session_id')}
+---
+code: |
+  text_review_list = [info for row_id, info in id_map.items() if not info.get('session_id')]
+  text_reviews = {}
+  for text_review in text_review_list:
+    if text_review['interview'] in text_reviews:
+      text_reviews[text_review['interview']].append(text_review)
+    else:
+      text_reviews[text_review['interview']] = [text_review]
 ---
 event: open_session
 code: |
