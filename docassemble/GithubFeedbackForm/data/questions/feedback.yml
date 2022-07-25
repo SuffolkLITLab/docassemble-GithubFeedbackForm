@@ -187,14 +187,9 @@ fields:
     show if:
       variable: reason
       is: language
-  - "**What is the bug?**": details
-    datatype: area
-    rows: 4
-    show if:
-      variable: reason
-      is: bug
   - note: |
-      **Tell us the steps that you followed before the problem, what you expected to happen, and what actually happened.** [BR]
+      **Tell us the steps that you followed before the bug, what you expected to happen, and what actually happened.** [BR]
+
       For example:
 
       1. On the first page, I typed my first name.
@@ -203,7 +198,15 @@ fields:
     show if:
       variable: reason
       is: bug
+  - "**What is the bug?**": details
+    datatype: area
+    rows: 4
+    show if:
+      variable: reason
+      is: bug
   - "**What would you like to tell us?**": details
+    datatype: area
+    rows: 4
     show if:
       variable: reason
       is: something
