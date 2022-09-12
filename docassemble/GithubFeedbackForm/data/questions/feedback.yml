@@ -140,7 +140,7 @@ fields:
       **What is your email?**
     field: panel_email
     datatype: email
-    default: ${ user_info().email }
+    default: ${ user_info().email if hasattr(user_info(), 'email') else '' }
     show if:
       variable: would_be_on_panel
       is: True
