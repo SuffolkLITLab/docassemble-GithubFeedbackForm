@@ -1,9 +1,6 @@
 modules:
   - .feedback_on_server
 ---
-objects:
-  - red: DARedis
----
 mandatory: True
 code: |
   feedback_type
@@ -77,6 +74,26 @@ fields:
     show if:
       variable: feedback_type
       is: separate_interview
+help:
+  label: |
+    View Panelists
+  content: |
+    ${ view_panelists }
+---
+if: not ids
+code: |
+  feedback_id = None
+---
+if: not ids
+id: main browse screen, no data
+question: |
+  Select feedback to browse
+fields:
+  - What type of feedback: feedback_type
+    datatype: dropdown
+    choices:
+      Reviews: reviews
+      Feedback: separate_interview
 help:
   label: |
     View Panelists
