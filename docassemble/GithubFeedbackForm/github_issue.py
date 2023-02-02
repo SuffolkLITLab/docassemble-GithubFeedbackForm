@@ -11,12 +11,13 @@ from docassemble.base.util import log, get_config, interview_url
 # repository to add issue to)
 __all__ = ["valid_github_issue_config", "make_github_issue", "feedback_link"]
 USERNAME = get_config("github issues", {}).get("username")
-TOKEN = get_config("github issues", {}).get("token")
 
+
+def _get_token():
+    return (get_config("github issues") or {}).get("token")
 
 def valid_github_issue_config():
-    return bool(TOKEN)
-
+    return bool(_get_token())
 
 def feedback_link(
     user_info_object=None,
@@ -97,7 +98,7 @@ def feedback_link(
 
 
 def make_github_issue(
-    repo_owner, repo_name, template=None, title=None, body=None, label=None
+    repo_owner:str, repo_name:str, template=None, title=None, body=None, label=None
 ) -> Optional[str]:
     """
     Create a new Github issue and return the URL.
@@ -108,12 +109,12 @@ def make_github_issue(
     """
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
     # Headers
-    if not TOKEN:
-        log("Error creating issues: No valid GitHub token provided.")
+    if not valid_github_issue_config():
+        log("Error creating issues: No valid GitHub token provided. See https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
         return None
 
     headers = {
-        "Authorization": "token %s" % TOKEN,
+        "Authorization": f"token {_get_token()}",
         "Accept": "application/vnd.github.v3+json",
     }
 
@@ -129,7 +130,9 @@ def make_github_issue(
             make_label_resp = requests.post(
                 labels_url, data=json.dumps(label_data), headers=headers
             )
-            if make_label_resp.status_code != 201:
+            if make_label_resp.status_code == 201:
+                log("Created the {label} label for the {make_issue_url} repo")
+            else:
                 log(
                     f"Was not able to find nor create the {label} label: {make_label_resp.text}"
                 )
