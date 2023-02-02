@@ -321,6 +321,8 @@ code: |
       log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
       send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
     mark_task_as_performed('sent to github', persistent=True)
+  else:
+    log("Already sent feedback to github from a feedback interview, not going to send again")
   send_to_github = True
 ---
 code: |
