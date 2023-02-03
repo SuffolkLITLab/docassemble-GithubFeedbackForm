@@ -316,7 +316,7 @@ code: |
     else:
       al_error_email
       log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
-      if al_error_email:
+      if al_error_email and not is_likely_spam(issue_template.content):
         log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
         send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
       else:
