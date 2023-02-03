@@ -9,7 +9,7 @@ from docassemble.base.util import log, get_config, interview_url
 
 # Authentication for user filing issue (must have read/write access to
 # repository to add issue to)
-__all__ = ["valid_github_issue_config", "make_github_issue", "feedback_link"]
+__all__ = ["valid_github_issue_config", "make_github_issue", "feedback_link", "is_likely_spam"]
 USERNAME = get_config("github issues", {}).get("username")
 
 
@@ -100,6 +100,11 @@ def feedback_link(
     )
 
 
+def is_likely_spam(body) -> bool:
+    if any([url in body for url in ["boostleadgeneration.com/", "jumboleadmagnet.com/"]]):
+        return True
+    return False
+
 def make_github_issue(
     repo_owner:str, repo_name:str, template=None, title=None, body=None, label=None
 ) -> Optional[str]:
@@ -148,6 +153,11 @@ def make_github_issue(
     if template:
         title = template.subject
         body = template.content
+
+    if is_likely_spam(body):
+        log("Error creating issue: the body of the issue is caught as spam")
+        return None
+
     # Create our issue
     data = {
         "title": title,
