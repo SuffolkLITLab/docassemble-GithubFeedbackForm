@@ -44,7 +44,7 @@ image sets:
       confusion: confusion.svg
       lifebuoy: lifebuoy.svg
       love: love.svg
-      enhancement: enhance.svg  
+      enhancement: enhance.svg
 ---
 # This is the repository that Github issue will be created on if
 # the repository is not passed as a URL argument
@@ -52,9 +52,6 @@ code: default_repository = 'docassemble-AssemblyLine'
 ---
 code: |
   default_github_user_or_organization = get_config('github issues',{}).get('default repository owner') or 'suffolklitlab'
----
-code: |
-  allowed_github_users = get_config('github issues',{}).get('allowed repository owners') or ["suffolklitlab","suffolklitlab-issues"]
 ---
 code: server_share_answers = get_config("github issues", {}).get("feedback session linking", False)
 ---
@@ -301,25 +298,29 @@ content: |
   % endif
 ---
 ########################## Send to GitHub code ##########################
+need:
+  - question_id
+  - variable
+  - package_version
+  - filename
 code: |
   if not task_performed('sent to github', persistent=True):
     if actually_share_answers:
       saved_uuid
     if showifdef('would_be_on_panel', False):
       add_panel_participant(panel_email)
-    if github_user in allowed_github_users:
-      issue_url
-      if actually_share_answers and issue_url and saved_uuid:
+    issue_url
+    if issue_url:
+      if actually_share_answers and saved_uuid:
         set_feedback_github_url(saved_uuid, issue_url)
-      if not issue_url and al_error_email:
+    else:
+      al_error_email
+      log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
+      if al_error_email:
         log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
         send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
-      elif not issue_url:
+      else:
         log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
-    else:
-      log(f"This form is not permitted to add issues on the {github_user} account. Check your config.")
-      log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-      send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
     mark_task_as_performed('sent to github', persistent=True)
   else:
     log("Already sent feedback to github from a feedback interview, not going to send again")

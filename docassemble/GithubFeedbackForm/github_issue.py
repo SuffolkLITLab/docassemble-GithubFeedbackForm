@@ -1,7 +1,7 @@
 import importlib
 import json
 import requests
-from typing import Optional
+from typing import Optional, List
 from docassemble.base.util import log, get_config, interview_url
 
 # reference: https://gist.github.com/JeffPaine/3145490
@@ -13,8 +13,11 @@ __all__ = ["valid_github_issue_config", "make_github_issue", "feedback_link"]
 USERNAME = get_config("github issues", {}).get("username")
 
 
-def _get_token():
+def _get_token() -> Optional[str]:
     return (get_config("github issues") or {}).get("token")
+
+def _get_allowed_repo_owners() -> List[str]:
+    return (get_config("github issues") or {}).get("allowed repository owners") or ["suffolklitlab", "suffolklitlab-issues"]
 
 def valid_github_issue_config():
     return bool(_get_token())
@@ -110,7 +113,11 @@ def make_github_issue(
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
     # Headers
     if not valid_github_issue_config():
-        log("Error creating issues: No valid GitHub token provided. See https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
+        log("Error creating issue: No valid GitHub token provided. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
+        return None
+    
+    if repo_owner not in _get_allowed_repo_owners():
+        log(f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
         return None
 
     headers = {
