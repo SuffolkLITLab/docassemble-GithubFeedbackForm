@@ -9,18 +9,29 @@ from docassemble.base.util import log, get_config, interview_url
 
 # Authentication for user filing issue (must have read/write access to
 # repository to add issue to)
-__all__ = ["valid_github_issue_config", "make_github_issue", "feedback_link", "is_likely_spam"]
+__all__ = [
+    "valid_github_issue_config",
+    "make_github_issue",
+    "feedback_link",
+    "is_likely_spam",
+]
 USERNAME = get_config("github issues", {}).get("username")
 
 
 def _get_token() -> Optional[str]:
     return (get_config("github issues") or {}).get("token")
 
+
 def _get_allowed_repo_owners() -> List[str]:
-    return (get_config("github issues") or {}).get("allowed repository owners") or ["suffolklitlab", "suffolklitlab-issues"]
+    return (get_config("github issues") or {}).get("allowed repository owners") or [
+        "suffolklitlab",
+        "suffolklitlab-issues",
+    ]
+
 
 def valid_github_issue_config():
     return bool(_get_token())
+
 
 def feedback_link(
     user_info_object=None,
@@ -101,12 +112,15 @@ def feedback_link(
 
 
 def is_likely_spam(body) -> bool:
-    if any([url in body for url in ["boostleadgeneration.com/", "jumboleadmagnet.com/"]]):
+    if any(
+        [url in body for url in ["boostleadgeneration.com/", "jumboleadmagnet.com/"]]
+    ):
         return True
     return False
 
+
 def make_github_issue(
-    repo_owner:str, repo_name:str, template=None, title=None, body=None, label=None
+    repo_owner: str, repo_name: str, template=None, title=None, body=None, label=None
 ) -> Optional[str]:
     """
     Create a new Github issue and return the URL.
@@ -118,11 +132,15 @@ def make_github_issue(
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
     # Headers
     if not valid_github_issue_config():
-        log("Error creating issue: No valid GitHub token provided. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
+        log(
+            "Error creating issue: No valid GitHub token provided. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
+        )
         return None
-    
+
     if repo_owner not in _get_allowed_repo_owners():
-        log(f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started")
+        log(
+            f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
+        )
         return None
 
     headers = {
