@@ -23,13 +23,13 @@ def _get_token() -> Optional[str]:
 
 
 def _get_allowed_repo_owners() -> List[str]:
-    github_config = (get_config("github issues") or {})
+    github_config = get_config("github issues") or {}
     repo_owners = github_config.get("allowed repository owners")
     if not repo_owners:
-      default_owner = github_config.get("default reporitory owner")
-      repo_owners = [default_owner] if default_owner else []
+        default_owner = github_config.get("default reporitory owner")
+        repo_owners = [default_owner] if default_owner else []
     if not repo_owners:
-      repo_owners = ["suffolklitlab", "suffolklitlab-issues"]
+        repo_owners = ["suffolklitlab", "suffolklitlab-issues"]
     return [owner.lower() for owner in repo_owners]
 
 
