@@ -1,6 +1,6 @@
 import importlib
 
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable, List, Tuple
 from datetime import datetime
 from sqlalchemy import (
     insert,
@@ -137,8 +137,12 @@ def get_all_feedback_info(interview=None) -> Iterable:
 
 
 def save_good_or_bad(
-    reaction: int, *, user_info_object=None, interview: str = None, version: str = None
-):
+    reaction: int,
+    *,
+    user_info_object=None,
+    interview: Optional[str] = None,
+    version: Optional[str] = None,
+) -> None:
     """Saves a user's reaction to an interview, in the form of an int (0 being
     neutral, positive numbers being good, and negative numbers being bad)"""
     _package_version = None
@@ -167,7 +171,7 @@ def save_good_or_bad(
         conn.execute(stmt)
 
 
-def get_good_or_bad(interview: str = None):
+def get_good_or_bad(interview: Optional[str] = None) -> List:
     """Retrieves user's aggregate reactions to an interview (how many reactions
     and the average score of them), grouped by interview and package version"""
     stmt = select(

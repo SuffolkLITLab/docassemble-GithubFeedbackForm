@@ -1,0 +1,4 @@
+docassemble.base>=1.4
+docassemble.webapp
+mypy
+types-requests
