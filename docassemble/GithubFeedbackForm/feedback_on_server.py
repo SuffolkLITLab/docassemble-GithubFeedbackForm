@@ -118,7 +118,7 @@ def set_feedback_github_url(id_for_feedback: str, github_url: str) -> bool:
     with engine.begin() as conn:
         result = conn.execute(stmt)
     if result.rowcount == 0:
-        log(f"Cannot find {id_for_feedback} in redis DB")
+        log(f"Cannot find {id_for_feedback} in DB")
         return False
     return True
 
@@ -147,7 +147,7 @@ def save_good_or_bad(
         _interview = user_info_object.filename
         try:
             _package_version = str(
-                importlib.import_module(user_info_object.package).__verison__
+                importlib.import_module(user_info_object.package).__version__
             )
         except:
             _package_version = "playground"
@@ -169,7 +169,7 @@ def save_good_or_bad(
 
 def get_good_or_bad(interview: str = None):
     """Retrieves user's aggregate reactions to an interview (how many reactions
-    and the average score of them), grouped by interview and package verison"""
+    and the average score of them), grouped by interview and package version"""
     stmt = select(
         good_or_bad_table.c.interview,
         good_or_bad_table.c.version,
