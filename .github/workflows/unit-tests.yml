@@ -1,0 +1,12 @@
+name: Run python-only unit tests
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test-altoolbox:
+    runs-on: ubuntu-latest
+    name: Run python only unit tests
+    steps:
+      - uses: SuffolkLITLab/ALActions/pythontests@main

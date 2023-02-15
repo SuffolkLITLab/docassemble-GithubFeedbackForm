@@ -1,7 +1,7 @@
 import importlib
 import json
 import requests
-from typing import Optional, List
+from typing import Dict, Optional, List, Union
 from docassemble.base.util import log, get_config, interview_url
 
 # reference: https://gist.github.com/JeffPaine/3145490
@@ -35,13 +35,13 @@ def valid_github_issue_config():
 
 def feedback_link(
     user_info_object=None,
-    i: str = None,
-    github_repo: str = None,
-    github_user: str = None,
-    variable: str = None,
-    question_id: str = None,
-    package_version: str = None,
-    filename: str = None,
+    i: Optional[str] = None,
+    github_repo: Optional[str] = None,
+    github_user: Optional[str] = None,
+    variable: Optional[str] = None,
+    question_id: Optional[str] = None,
+    package_version: Optional[str] = None,
+    filename: Optional[str] = None,
 ) -> str:
     """
     Helper function to get a link to the GitHub feedback form.
@@ -111,7 +111,9 @@ def feedback_link(
     )
 
 
-def is_likely_spam(body) -> bool:
+def is_likely_spam(body: Optional[str]) -> bool:
+    if not body:
+        return False
     if any(
         [url in body for url in ["boostleadgeneration.com/", "jumboleadmagnet.com/"]]
     ):
@@ -120,7 +122,12 @@ def is_likely_spam(body) -> bool:
 
 
 def make_github_issue(
-    repo_owner: str, repo_name: str, template=None, title=None, body=None, label=None
+    repo_owner: str,
+    repo_name: str,
+    template=None,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+    label: Optional[str] = None,
 ) -> Optional[str]:
     """
     Create a new Github issue and return the URL.
@@ -177,7 +184,7 @@ def make_github_issue(
         return None
 
     # Create our issue
-    data = {
+    data: Dict[str, Union[None, str, List[str]]] = {
         "title": title,
         "body": body,
     }
