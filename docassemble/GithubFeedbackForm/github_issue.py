@@ -23,10 +23,14 @@ def _get_token() -> Optional[str]:
 
 
 def _get_allowed_repo_owners() -> List[str]:
-    return (get_config("github issues") or {}).get("allowed repository owners") or [
-        "suffolklitlab",
-        "suffolklitlab-issues",
-    ]
+    github_config = (get_config("github issues") or {})
+    repo_owners = github_config.get("allowed repository owners")
+    if not repo_owners:
+      default_owner = github_config.get("default reporitory owner")
+      repo_owners = [default_owner] if default_owner else []
+    if not repo_owners:
+      repo_owners = ["suffolklitlab", "suffolklitlab-issues"]
+    return [owner.lower() for owner in repo_owners]
 
 
 def valid_github_issue_config():
@@ -137,7 +141,7 @@ def make_github_issue(
         )
         return None
 
-    if repo_owner not in _get_allowed_repo_owners():
+    if repo_owner.lower() not in _get_allowed_repo_owners():
         log(
             f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
         )
