@@ -89,7 +89,7 @@ metadata_obj.create_all(engine)
 
 
 def save_feedback_info(
-    interview: str, *, session_id: str = None, template=None, body=None
+    interview: str, *, session_id: Optional[str] = None, template=None, body=None
 ) -> Optional[str]:
     """Saves feedback along with optional session information in a SQL DB"""
     if template:
