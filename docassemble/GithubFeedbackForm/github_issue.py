@@ -2,6 +2,7 @@ import importlib
 import json
 import requests
 from typing import Dict, Optional, List, Union
+from urllib.parse import urlencode, quote_plus
 from docassemble.base.util import log, get_config, interview_url
 
 # reference: https://gist.github.com/JeffPaine/3145490
@@ -14,6 +15,7 @@ __all__ = [
     "make_github_issue",
     "feedback_link",
     "is_likely_spam",
+    "prefill_github_issue_url",
 ]
 USERNAME = get_config("github issues", {}).get("username")
 
@@ -123,6 +125,45 @@ def is_likely_spam(body: Optional[str]) -> bool:
     ):
         return True
     return False
+
+
+def prefill_github_issue_url(
+    repo_owner: Optional[str] = None,
+    repo_name: Optional[str] = None,
+    template=None,
+    title=None,
+    body=None,
+    label=None,
+) -> Optional[str]:
+    """
+    Makes a URL that when visited, pre-fills part of the Github issue. It doesn't automatically make a Github issue for you.
+
+    template - the docassemble template for the github issue. Overrides `title` and `body` if provided.
+    title - the title for the github issue
+    body - the body of the github issue
+    """
+    if not repo_owner:
+        repo_owner = (
+            get_config("github issues", {}).get("default repository owner")
+            or "suffolklitlab"
+        )
+    if not repo_name:
+        repo_name = "docassemble-AssemblyLine"  # TODO(brycew): should this be the default repo? it is in `feedback.yml`
+    # TODO(brycew): this function doesn't make issues: do we still want to prevent making URLs for other repos?
+    if repo_owner.lower() not in _get_allowed_repo_owners():
+        log(
+            f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
+        )
+        return None
+
+    if template:
+        title = template.subject
+        body = template.content
+
+    payload = {"title": title, "body": body}
+    url_params = urlencode(payload, quote_via=quote_plus)
+
+    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?{url_params}"
 
 
 def make_github_issue(

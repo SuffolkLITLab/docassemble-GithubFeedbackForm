@@ -57,7 +57,7 @@ def potential_panelists() -> Iterable[Tuple[str, datetime]]:
 
 ###################################
 ## Using SQLAlchemy to save / retrieve session information that is linked
-## to specific feedback issues
+## to specific feedback issues, or just to store private feedback
 
 db_url = alchemy_url("db")
 engine = create_engine(db_url)
@@ -89,7 +89,7 @@ metadata_obj.create_all(engine)
 
 
 def save_feedback_info(
-    interview, *, session_id=None, template=None, body=None
+    interview: str, *, session_id: Optional[str] = None, template=None, body=None
 ) -> Optional[str]:
     """Saves feedback along with optional session information in a SQL DB"""
     if template:
@@ -105,6 +105,9 @@ def save_feedback_info(
 
         return id_for_feedback
     else:  # can happen if the forwarding interview didn't pass session info
+        log(
+            f"feedback_on_server: Unable to save this feedback in DB: interview: {interview}, session_id: {session_id}, body: {body}"
+        )
         return None
 
 
