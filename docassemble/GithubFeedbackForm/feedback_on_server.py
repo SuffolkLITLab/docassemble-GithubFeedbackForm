@@ -17,7 +17,7 @@ from sqlalchemy import (
     func,
 )
 from docassemble.base.util import DARedis, log
-from docassemble.base.sql import alchemy_url
+from docassemble.base.sql import alchemy_url, connect_args, upgrade_db
 
 __all__ = [
     "save_feedback_info",
@@ -60,7 +60,8 @@ def potential_panelists() -> Iterable[Tuple[str, datetime]]:
 ## to specific feedback issues, or just to store private feedback
 
 db_url = alchemy_url("db")
-engine = create_engine(db_url)
+conn_args = connect_args("db")
+engine = create_engine(db_url, connect_args=conn_args)
 
 metadata_obj = MetaData()
 
@@ -87,6 +88,7 @@ good_or_bad_table = Table(
 
 metadata_obj.create_all(engine)
 
+upgrade_db(db_url, __file__, engine, version_table="al_feedback_on_server_version", conn_args=conn_args)
 
 def save_feedback_info(
     interview: str, *, session_id: Optional[str] = None, template=None, body=None
