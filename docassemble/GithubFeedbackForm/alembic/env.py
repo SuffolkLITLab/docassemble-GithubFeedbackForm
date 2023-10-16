@@ -12,7 +12,7 @@ from alembic import context
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_PASS", os.environ.get("DB_PASS"))
+config.set_section_option(section, "DB_PASS", os.getenv("DB_PASS", ""))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
