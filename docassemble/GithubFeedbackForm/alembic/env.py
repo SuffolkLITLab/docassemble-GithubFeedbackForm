@@ -66,8 +66,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata,
-            version_table="al_feedback_on_sevrver_version"
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table="al_feedback_on_sevrver_version",
         )
 
         with context.begin_transaction():

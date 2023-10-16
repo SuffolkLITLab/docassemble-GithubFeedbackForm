@@ -88,7 +88,14 @@ good_or_bad_table = Table(
 
 metadata_obj.create_all(engine)
 
-upgrade_db(db_url, __file__, engine, version_table="al_feedback_on_server_version", conn_args=conn_args)
+upgrade_db(
+    db_url,
+    __file__,
+    engine,
+    version_table="al_feedback_on_server_version",
+    conn_args=conn_args,
+)
+
 
 def save_feedback_info(
     interview: str, *, session_id: Optional[str] = None, template=None, body=None
