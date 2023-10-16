@@ -45,7 +45,12 @@ def upgrade() -> None:
             sa.Column("reaction", sa.INTEGER(), autoincrement=False, nullable=True),
             sa.Column("interview", sa.String, autoincrement=False, nullable=True),
             sa.Column("version", sa.String, autoincrement=False, nullable=True),
-            sa.Column("datetime", sa.TIMESTAMP(timezone=True), autoincrement=False, nullable=True),
+            sa.Column(
+                "datetime",
+                sa.TIMESTAMP(timezone=True),
+                autoincrement=False,
+                nullable=True,
+            ),
         )
 
 
