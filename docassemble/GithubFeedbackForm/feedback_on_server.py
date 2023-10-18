@@ -12,6 +12,7 @@ from sqlalchemy import (
     Column,
     String,
     Integer,
+    Boolean,
     MetaData,
     create_engine,
     func,
@@ -25,6 +26,7 @@ __all__ = [
     "redis_panel_emails_key",
     "add_panel_participant",
     "potential_panelists",
+    "mark_archived",
     "get_all_feedback_info",
     "save_good_or_bad",
     "get_good_or_bad",
@@ -75,6 +77,8 @@ feedback_session_table = Table(
     Column("session_id", String),
     Column("body", Text),
     Column("html_url", String),
+    Column("archived", Boolean),
+    Column("datetime", DateTime),
 )
 
 good_or_bad_table = Table(
@@ -106,7 +110,7 @@ def save_feedback_info(
 
     if interview and (session_id or body):
         stmt = insert(feedback_session_table).values(
-            interview=interview, session_id=session_id, body=body
+            interview=interview, session_id=session_id, body=body, datetime=datetime.now(), archived=False
         )
         with engine.begin() as conn:
             result = conn.execute(stmt)
@@ -134,14 +138,29 @@ def set_feedback_github_url(id_for_feedback: str, github_url: str) -> bool:
         return False
     return True
 
+def mark_archived(id_for_feedback: str) -> bool:
+    stmt = (
+        update(feedback_session_table)
+        .where(feedback_session_table.c.id == id_for_feedback)
+        .values(archived=True)
+    )
+    with engine.begin() as conn:
+        result = conn.execute(stmt)
+    if result.rowcount == 0:
+        log(f"Cannot find {id_for_feedback} in DB")
+        return False
+    return True
 
-def get_all_feedback_info(interview=None) -> Iterable:
+def get_all_feedback_info(interview=None, include_archived=False) -> Iterable:
+    stmt = select(feedback_session_table)
     if interview:
-        stmt = select(feedback_session_table).where(
+        stmt = stmt.where(
             feedback_session_table.c.interview == interview
         )
-    else:
-        stmt = select(feedback_session_table)
+    if not include_archived:
+        stmt = stmt.where(
+          feedback_session_table.c.archived == False
+        )
     with engine.begin() as conn:
         results = conn.execute(stmt)
         # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL
