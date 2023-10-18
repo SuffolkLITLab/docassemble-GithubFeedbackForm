@@ -11,15 +11,18 @@ from datetime import datetime
 
 
 # revision identifiers, used by Alembic.
-revision = '8821926028d6'
-down_revision = '542797f969ea'
+revision = "8821926028d6"
+down_revision = "542797f969ea"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     op.add_column("feedback_session", sa.Column("archived", sa.Boolean))
-    op.add_column("feedback_session", sa.Column("datetime", sa.TIMESTAMP(timezone=True), server_default=datetime.min))
+    op.add_column(
+        "feedback_session",
+        sa.Column("datetime", sa.TIMESTAMP(timezone=True), server_default=datetime.min),
+    )
 
 
 def downgrade() -> None:
