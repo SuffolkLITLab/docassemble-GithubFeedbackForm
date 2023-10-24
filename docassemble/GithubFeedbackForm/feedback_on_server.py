@@ -18,13 +18,8 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from docassemble.base.util import DARedis
+from docassemble.base.util import DARedis, log
 from docassemble.base.sql import alchemy_url, connect_args, upgrade_db
-
-def log(msg):
-  with open("/tmp/tmp_logging.txt", "a") as f:
-    f.write(msg)
-
 
 __all__ = [
     "save_feedback_info",
@@ -99,10 +94,8 @@ conn_args = connect_args("db")
 engine = create_engine(db_url, connect_args=conn_args)
 
 metadata_obj.create_all(engine)
-
 metadata_obj.bind = engine
 
-log("Calling upgrade db")
 upgrade_db(
     db_url,
     __file__,
