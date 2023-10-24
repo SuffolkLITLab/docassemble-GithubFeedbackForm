@@ -17,8 +17,14 @@ from sqlalchemy import (
     create_engine,
     func,
 )
-from docassemble.base.util import DARedis, log
+from sqlalchemy.ext.declarative import declarative_base
+from docassemble.base.util import DARedis
 from docassemble.base.sql import alchemy_url, connect_args, upgrade_db
+
+def log(msg):
+  with open("/tmp/tmp_logging.txt", "a") as f:
+    f.write(msg)
+
 
 __all__ = [
     "save_feedback_info",
@@ -61,11 +67,8 @@ def potential_panelists() -> Iterable[Tuple[str, datetime]]:
 ## Using SQLAlchemy to save / retrieve session information that is linked
 ## to specific feedback issues, or just to store private feedback
 
-db_url = alchemy_url("db")
-conn_args = connect_args("db")
-engine = create_engine(db_url, connect_args=conn_args)
-
-metadata_obj = MetaData()
+Base = declarative_base()
+metadata_obj = Base.metadata
 
 ## This table functions as both storage for bug report-session links,
 ## and for more general on-server feedback, prompted for at the end of interviews
@@ -90,8 +93,14 @@ good_or_bad_table = Table(
     Column("datetime", DateTime),
 )
 
+
+db_url = alchemy_url("db")
+conn_args = connect_args("db")
+engine = create_engine(db_url, connect_args=conn_args)
+
 metadata_obj.create_all(engine)
 
+log("Calling upgrade db")
 upgrade_db(
     db_url,
     __file__,
