@@ -23,7 +23,7 @@ depends_on = None
 
 def upgrade() -> None:
     log("Upgrading to latest")
-    op.add_column("feedback_session", sa.Column("archived", sa.Boolean))
+    op.add_column("feedback_session", sa.Column("archived", sa.Boolean, server_default="False"))
     op.add_column("feedback_session", sa.Column("datetime", sa.TIMESTAMP(timezone=True), server_default=str(datetime.min)))
 
 
