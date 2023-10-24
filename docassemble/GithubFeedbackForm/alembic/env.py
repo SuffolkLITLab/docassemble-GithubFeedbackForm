@@ -73,7 +73,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            version_table="al_feedback_on_sevrver_version",
+            version_table="al_feedback_on_server_version",
         )
 
         with context.begin_transaction():

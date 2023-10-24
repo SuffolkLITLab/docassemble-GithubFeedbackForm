@@ -100,6 +100,8 @@ engine = create_engine(db_url, connect_args=conn_args)
 
 metadata_obj.create_all(engine)
 
+metadata_obj.bind = engine
+
 log("Calling upgrade db")
 upgrade_db(
     db_url,
