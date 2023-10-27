@@ -100,7 +100,7 @@ upgrade_db(
     db_url,
     __file__,
     engine,
-    version_table="al_feedback_on_server_version",
+    version_table="al_feedback_on_sevrver_version",
     conn_args=conn_args,
 )
 
