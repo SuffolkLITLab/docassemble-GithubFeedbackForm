@@ -100,6 +100,7 @@ upgrade_db(
     db_url,
     __file__,
     engine,
+    # Typo is intentional; we're stuck with it; https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm/pull/43#issuecomment-1783498410
     version_table="al_feedback_on_sevrver_version",
     conn_args=conn_args,
 )
