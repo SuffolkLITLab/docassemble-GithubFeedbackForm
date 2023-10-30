@@ -18,12 +18,8 @@ depends_on = None
 
 
 # Code based on https://github.com/talkpython/data-driven-web-apps-with-flask
-def table_has_column(table, column, engine=None):
-    config = op.get_context().config
-    if not engine:
-        engine = sa.engine_from_config(
-            config.get_section(config.config_ini_section), prefix='sqlalchemy.')
-    insp = sa.inspect(engine)
+def table_has_column(table, column):
+    insp = sa.inspect(op.get_bind())
     has_column = False
     for col in insp.get_columns(table):
         if column not in col['name']:
@@ -33,11 +29,8 @@ def table_has_column(table, column, engine=None):
 
 
 def upgrade() -> None:
-    config = op.get_context().config
-    engine = sa.engine_from_config(
-        config.get_section(config.config_ini_section), prefix='sqlalchemy.')
-    make_archived = not table_has_column("feedback_session", "archived", engine)
-    make_datetime = not table_has_column("feedback_session", "datetime", engine)
+    make_archived = not table_has_column("feedback_session", "archived")
+    make_datetime = not table_has_column("feedback_session", "datetime")
     if make_archived:
         op.add_column(
             "feedback_session",
