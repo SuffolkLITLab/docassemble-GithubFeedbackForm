@@ -1,4 +1,6 @@
+import os
 import importlib
+import json
 
 from typing import Optional, Iterable, List, Tuple
 from datetime import datetime
@@ -18,8 +20,10 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.ext.declarative import declarative_base
+from alembic.config import Config
+from alembic import command
 from docassemble.base.util import DARedis, log
-from docassemble.base.sql import alchemy_url, connect_args, upgrade_db
+from docassemble.base.sql import alchemy_url, connect_args
 
 __all__ = [
     "save_feedback_info",
@@ -62,6 +66,32 @@ def potential_panelists() -> Iterable[Tuple[str, datetime]]:
 ## Using SQLAlchemy to save / retrieve session information that is linked
 ## to specific feedback issues, or just to store private feedback
 
+
+def upgrade_db(url, py_file, engine, version_table, conn_args):
+    """A stripped down version of `docassemble.base.sql:upgrade_db`,
+    that does not `stamp` ever; it always tries to upgrade from scratch.
+
+    Assumes that the upgrade functions in alembic have checks for existing
+    columns and tables.
+    """
+    packagedir = os.path.dirname(os.path.abspath(py_file))
+    alembic_path = os.path.join(packagedir, "alembic")
+    if not os.path.isdir(alembic_path):
+        return
+    ini_file = os.path.join(packagedir, "alembic.ini")
+    if not os.path.isfile(ini_file):
+        log(f"alembic.ini file not found at {ini_file}")
+        return
+    versions_path = os.path.join(alembic_path, "versions")
+    if not os.path.isdir(versions_path):
+        os.makedirs(versions_path, exist_ok=True)
+    alembic_cfg = Config(ini_file)
+    alembic_cfg.set_main_option("sqlalchemy.url", url)
+    alembic_cfg.set_main_option("connect_args", json.dumps(conn_args))
+    alembic_cfg.set_main_option("script_location", alembic_path)
+    command.upgrade(alembic_cfg, "head")
+
+
 Base = declarative_base()
 metadata_obj = Base.metadata
 
@@ -100,8 +130,7 @@ upgrade_db(
     db_url,
     __file__,
     engine,
-    # Typo is intentional; we're stuck with it; https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm/pull/43#issuecomment-1783498410
-    version_table="al_feedback_on_sevrver_version",
+    version_table="al_feedback_on_server_version",
     conn_args=conn_args,
 )
 
