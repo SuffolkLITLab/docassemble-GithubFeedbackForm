@@ -21,7 +21,7 @@ def table_has_column(table, column):
     insp = sa.inspect(op.get_bind())
     has_column = False
     for col in insp.get_columns(table):
-        if column not in col['name']:
+        if column not in col["name"]:
             continue
         has_column = True
     return has_column
