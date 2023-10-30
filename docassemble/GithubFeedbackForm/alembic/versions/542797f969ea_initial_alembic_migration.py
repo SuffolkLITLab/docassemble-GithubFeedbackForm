@@ -7,8 +7,6 @@ Create Date: 2023-10-09 17:06:05.463730
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine import reflection
-
 
 # revision identifiers, used by Alembic.
 revision = "542797f969ea"
@@ -19,11 +17,7 @@ depends_on = None
 
 # Code based on https://github.com/talkpython/data-driven-web-apps-with-flask
 def table_does_not_exist(table, schema=None):
-    config = op.get_context().config
-    engine = sa.engine_from_config(
-        config.get_section(config.config_ini_section), prefix="sqlalchemy."
-    )
-    insp = reflection.Inspector.from_engine(engine)
+    insp = sa.inspect(op.get_bind())
     return insp.has_table(table, schema) == False
 
 
