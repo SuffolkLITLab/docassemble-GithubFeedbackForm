@@ -1,4 +1,6 @@
+import os
 import importlib
+import json
 
 from typing import Optional, Iterable, List, Tuple
 from datetime import datetime
@@ -12,12 +14,16 @@ from sqlalchemy import (
     Column,
     String,
     Integer,
+    Boolean,
     MetaData,
     create_engine,
     func,
 )
+from sqlalchemy.ext.declarative import declarative_base
+from alembic.config import Config
+from alembic import command
 from docassemble.base.util import DARedis, log
-from docassemble.base.sql import alchemy_url, connect_args, upgrade_db
+from docassemble.base.sql import alchemy_url, connect_args
 
 __all__ = [
     "save_feedback_info",
@@ -25,6 +31,7 @@ __all__ = [
     "redis_panel_emails_key",
     "add_panel_participant",
     "potential_panelists",
+    "mark_archived",
     "get_all_feedback_info",
     "save_good_or_bad",
     "get_good_or_bad",
@@ -59,11 +66,34 @@ def potential_panelists() -> Iterable[Tuple[str, datetime]]:
 ## Using SQLAlchemy to save / retrieve session information that is linked
 ## to specific feedback issues, or just to store private feedback
 
-db_url = alchemy_url("db")
-conn_args = connect_args("db")
-engine = create_engine(db_url, connect_args=conn_args)
 
-metadata_obj = MetaData()
+def upgrade_db(url, py_file, engine, version_table, conn_args):
+    """A stripped down version of `docassemble.base.sql:upgrade_db`,
+    that does not `stamp` ever; it always tries to upgrade from scratch.
+
+    Assumes that the upgrade functions in alembic have checks for existing
+    columns and tables.
+    """
+    packagedir = os.path.dirname(os.path.abspath(py_file))
+    alembic_path = os.path.join(packagedir, "alembic")
+    if not os.path.isdir(alembic_path):
+        return
+    ini_file = os.path.join(packagedir, "alembic.ini")
+    if not os.path.isfile(ini_file):
+        log(f"alembic.ini file not found at {ini_file}")
+        return
+    versions_path = os.path.join(alembic_path, "versions")
+    if not os.path.isdir(versions_path):
+        os.makedirs(versions_path, exist_ok=True)
+    alembic_cfg = Config(ini_file)
+    alembic_cfg.set_main_option("sqlalchemy.url", url)
+    alembic_cfg.set_main_option("connect_args", json.dumps(conn_args))
+    alembic_cfg.set_main_option("script_location", alembic_path)
+    command.upgrade(alembic_cfg, "head")
+
+
+Base = declarative_base()
+metadata_obj = Base.metadata
 
 ## This table functions as both storage for bug report-session links,
 ## and for more general on-server feedback, prompted for at the end of interviews
@@ -75,6 +105,8 @@ feedback_session_table = Table(
     Column("session_id", String),
     Column("body", Text),
     Column("html_url", String),
+    Column("archived", Boolean),
+    Column("datetime", DateTime),
 )
 
 good_or_bad_table = Table(
@@ -86,7 +118,13 @@ good_or_bad_table = Table(
     Column("datetime", DateTime),
 )
 
+
+db_url = alchemy_url("db")
+conn_args = connect_args("db")
+engine = create_engine(db_url, connect_args=conn_args)
+
 metadata_obj.create_all(engine)
+metadata_obj.bind = engine
 
 upgrade_db(
     db_url,
@@ -106,7 +144,11 @@ def save_feedback_info(
 
     if interview and (session_id or body):
         stmt = insert(feedback_session_table).values(
-            interview=interview, session_id=session_id, body=body
+            interview=interview,
+            session_id=session_id,
+            body=body,
+            datetime=datetime.now(),
+            archived=False,
         )
         with engine.begin() as conn:
             result = conn.execute(stmt)
@@ -135,13 +177,26 @@ def set_feedback_github_url(id_for_feedback: str, github_url: str) -> bool:
     return True
 
 
-def get_all_feedback_info(interview=None) -> Iterable:
+def mark_archived(id_for_feedback: str) -> bool:
+    stmt = (
+        update(feedback_session_table)
+        .where(feedback_session_table.c.id == id_for_feedback)
+        .values(archived=True)
+    )
+    with engine.begin() as conn:
+        result = conn.execute(stmt)
+    if result.rowcount == 0:
+        log(f"Cannot find {id_for_feedback} in DB")
+        return False
+    return True
+
+
+def get_all_feedback_info(interview=None, include_archived=False) -> Iterable:
+    stmt = select(feedback_session_table)
     if interview:
-        stmt = select(feedback_session_table).where(
-            feedback_session_table.c.interview == interview
-        )
-    else:
-        stmt = select(feedback_session_table)
+        stmt = stmt.where(feedback_session_table.c.interview == interview)
+    if not include_archived:
+        stmt = stmt.where(feedback_session_table.c.archived == False)
     with engine.begin() as conn:
         results = conn.execute(stmt)
         # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL

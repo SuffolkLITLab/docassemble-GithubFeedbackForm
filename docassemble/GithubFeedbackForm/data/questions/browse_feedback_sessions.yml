@@ -16,10 +16,14 @@ mandatory: True
 code: |
   feedback_summary
 ---
+reconsider:
+  - text_reviews
 event: feedback_summary 
 question: |
   Feedback Summary
 subquestion: |
+  ${ action_button_html(url_action('toggle_archived'), label="Show archived" if not show_archived else "Hide archived", color="secondary")}
+
   ${ tabbed_templates_html("Feedback tabs", reviews_table_template, feedback_select_template)}
 help:
   label: |
@@ -44,19 +48,25 @@ content: |
   % for interview, review_list in text_reviews.items():
   <h3 class="h5">In ${ interview }</h3>
   % for review in review_list:
+  % if review['archived']:
+  **ARCHIVED**
+  % endif
+
+  On ${ review['datetime'] }:
+
   > ${ review['body'] }
 
   % if not review.get('html_url'):
   ${ action_button_html(prefill_github_issue_url(repo_name=interview.split(":")[0].replace(".", "-"), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
   % else:
   [Link to Github issue](${ review.get('html_url') })
+
   % endif
-
   % if review.get('session_id'):
-  ## Session ID
-  ${ review['interview'] }:${ review.get('session_id') }
-
   ${ action_button_html(url_action('open_session', interview=review['interview'], session_id=review.get('session_id')), label='Open Session', color='secondary') }
+  % endif
+  % if not review['archived']:
+  ${ action_button_html(url_action('mark_as_archived', feedback_id=review['id']), label="Archive", color="danger")}
   % endif
 
   ---
@@ -88,11 +98,13 @@ content: |
     % endfor
 ---
 code: |
-  id_map = get_all_feedback_info()
+  show_archived = False
 ---
+depends on:
+  - show_archived
 code: |
   text_reviews = {}
-  for row_id, info in id_map.items():
+  for row_id, info in get_all_feedback_info(None, include_archived=show_archived).items():
     info['id'] = row_id
     if info['interview'] in text_reviews:
       text_reviews[info['interview']].append(info)
@@ -107,6 +119,15 @@ code: |
       response(url=interview_url(i=action_argument('interview'), session=info.get('session_id'), temporary=1))
   else:
       log("Need interview and session ID to open session", "danger")
+---
+event: mark_as_archived
+code: |
+  feedback_id = action_argument('feedback_id')
+  mark_archived(feedback_id)
+---
+event: toggle_archived
+code: |
+  show_archived = not show_archived
 ---
 code: |
   al_github_label = 'user feedback'
