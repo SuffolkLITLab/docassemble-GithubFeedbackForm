@@ -131,6 +131,8 @@ fields:
   - note: |
       We will contact you for the feedback panel by email.
     show if:
+      code: |
+        server_ask_panel and not get_config('debug')
       variable: would_be_on_panel
       is: True
   - label: |
@@ -139,6 +141,8 @@ fields:
     datatype: email
     default: ${ user_info().email if hasattr(user_info(), 'email') else '' }
     show if:
+      code: |
+        server_ask_panel and not get_config('debug')
       variable: would_be_on_panel
       is: True
 continue button field: intro
