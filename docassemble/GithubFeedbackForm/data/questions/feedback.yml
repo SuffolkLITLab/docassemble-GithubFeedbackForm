@@ -29,7 +29,7 @@ code: |
     gentle_exit
   else:
     issue_template = generic_report[reason]
-  send_to_github
+  note_issue
   prevent_going_back()
   store_variables_snapshot(persistent=True)
   end_results
@@ -56,6 +56,8 @@ code: |
 code: server_share_answers = get_config("github issues", {}).get("feedback session linking", False)
 ---
 code: server_ask_panel = get_config("github issues", {}).get("ask panel", False)
+---
+code: should_send_to_github = get_config("github issues", {}).get("send to github", True)
 ---
 code: github_user = url_args.get('github_user', default_github_user_or_organization) or "suffolklitlab-issues"
 ---
@@ -303,31 +305,33 @@ content: |
 ---
 ########################## Send to GitHub code ##########################
 need:
+  - store_local_only
   - question_id
   - variable
   - package_version
   - filename
 code: |
-  if not task_performed('sent to github', persistent=True):
+  if not task_performed('issue noted', persistent=True):
     saved_uuid
     if showifdef('would_be_on_panel', False):
       add_panel_participant(panel_email)
-    issue_url
-    if issue_url:
-      if saved_uuid:
-        set_feedback_github_url(saved_uuid, issue_url)
-    else:
-      al_error_email
-      log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
-      if al_error_email and not is_likely_spam(issue_template.content):
-        log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-        send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
+    if should_send_to_github:
+      issue_url
+      if issue_url:
+        if saved_uuid:
+          set_feedback_github_url(saved_uuid, issue_url)
       else:
-        log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
-    mark_task_as_performed('sent to github', persistent=True)
+        al_error_email
+        log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
+        if al_error_email and not is_likely_spam(issue_template.content):
+          log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
+          send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
+        else:
+          log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+    mark_task_as_performed('issue noted', persistent=True)
   else:
     log("Already sent feedback to github from a feedback interview, not going to send again")
-  send_to_github = True
+  note_issue = True
 ---
 code: |
   saved_uuid = save_feedback_info(interview=filename, session_id=orig_session_id if actually_share_answers else None, template=issue_template)
