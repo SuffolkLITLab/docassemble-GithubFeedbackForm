@@ -23,6 +23,7 @@ This package is designed to support the following workflow:
    ```yaml
    github issues:
      username: "YOUR_NEW_DEDICATED_ISSUE_CREATION_ACCOUNT"
+     send to github: True # Make this false if you want to store feedback on the server
      token: "..." # A valid GitHub personal access token associated with the username above
      default repository owner: YOUR_GITHUB_USER_OR_ORG_HERE
      allowed repository owners: # List the repo that your account will be allowed to create issues on

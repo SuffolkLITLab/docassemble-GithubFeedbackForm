@@ -305,7 +305,7 @@ content: |
 ---
 ########################## Send to GitHub code ##########################
 need:
-  - store_local_only
+  - should_send_to_github
   - question_id
   - variable
   - package_version
