@@ -120,8 +120,24 @@ def feedback_link(
 def is_likely_spam(body: Optional[str]) -> bool:
     if not body:
         return False
+    body = body.lower()
+    if any([url in body for url in {"leadgeneration.com", "leadmagnet.com"}]):
+        return True
     if any(
-        [url in body for url in ["boostleadgeneration.com/", "jumboleadmagnet.com/"]]
+        [
+            keyword in body
+            for keyword in {
+                "free trial",
+                "unsubscribe",
+                "web visitors into leads",
+                "international long distance calling",
+                "100 times more effective",
+                "web visitors",
+                "lead feature",
+                "web lead",
+                "lead generation",
+            }
+        ]
     ):
         return True
     return False
