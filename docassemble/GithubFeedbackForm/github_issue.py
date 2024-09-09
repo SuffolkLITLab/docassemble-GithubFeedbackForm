@@ -59,9 +59,9 @@ def feedback_link(
 
     To determine the feedback destination repository's name, e.g., docassemble-AssemblyLine:
 
-    1. It tries using the output of current_context() (formerly user_info()), if passed as the user_info_object parameter, 
+    1. It tries using the output of current_context() (formerly user_info()), if passed as the user_info_object parameter,
        to retrieve the package's name. It also tries to get the variable, question_id,
-       filename, and session ID from the user_info_object. Note if you want to test the feedback from during development, the package name is not available 
+       filename, and session ID from the user_info_object. Note if you want to test the feedback from during development, the package name is not available
        when running from the playground.
     2. It uses the value of the github_repo parameter.
     3. It defaults to the demo repository on the suffolklitlab-issues organization.
@@ -72,11 +72,11 @@ def feedback_link(
     2. It tries to get the default repository owner from the Docassemble config, at github issues: default repository owner.
     3. It defaults to suffolklitlab-issues.
 
-    The variable, question_id, package_version, and filename parameters can also be passed in manually rather than retrieved from the 
+    The variable, question_id, package_version, and filename parameters can also be passed in manually rather than retrieved from the
     user_info_object parameter.
 
     Args:
-        user_info_object (str, optional): the output of the current_context() function, which might contain enough information to create the link. 
+        user_info_object (str, optional): the output of the current_context() function, which might contain enough information to create the link.
                                           (Name is historical as the current_context() function replaces the former user_info() function)
         i (str, optional): path to the feedback interview file, e.g., docassemble.GithubFeedbackForm:feedback.yml
         github_repo (str, optional): GitHub repository name where issue feedback will be made. E.g, docassemble-AssemblyLine
@@ -85,7 +85,7 @@ def feedback_link(
         question_id (str, optional): the question ID that the feedback is about
         package_version (str, optional): the version of the package that the feedback is about
         filename (str, optional): the YAML interview filename that the feedback is about
-    
+
     Returns:
         str: a URL to the feedback form that includes the public URL parameters for the feedback interview
 
@@ -118,6 +118,8 @@ def feedback_link(
                 "default repository owner"
             )
         _session_id = user_info_object.session
+    else:
+        _session_id = None
 
     # Allow keyword params to override any info from the current_context() object
     # We will try pulling the repo owner name from the Docassemble config
@@ -127,13 +129,17 @@ def feedback_link(
     elif (
         get_config("github issues", {}).get("default repository owner") and github_repo
     ):
-        log("No github_user provided, using default repository owner from config to get the feedback")
+        log(
+            "No github_user provided, using default repository owner from config to get the feedback"
+        )
         _github_user = get_config("github issues", {}).get("default repository owner")
         _github_repo = github_repo
     else:
         _github_repo = "demo"
         _github_user = "suffolklitlab-issues"
-        log("No github_repo provided, using default demo repository to get the feedback")
+        log(
+            "No github_repo provided, using default demo repository to get the feedback"
+        )
     if variable:
         _variable = variable
     if question_id:
