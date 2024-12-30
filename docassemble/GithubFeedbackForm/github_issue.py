@@ -168,7 +168,9 @@ def feedback_link(
     )
 
 
-def is_likely_spam(body: str, keywords: Optional[List[str]] = None, filter_urls: bool = True) -> bool:
+def is_likely_spam(
+    body: str, keywords: Optional[List[str]] = None, filter_urls: bool = True
+) -> bool:
     """
     Check if the body of the issue is likely spam based on a set of keywords and URLs.
 
@@ -188,7 +190,7 @@ def is_likely_spam(body: str, keywords: Optional[List[str]] = None, filter_urls:
         "backlinks",
         "binary options",
         "bitcoin investment",
-        "cheap hosting",        
+        "cheap hosting",
         "cheap meds",
         "cialis",
         "credit repair fast",
@@ -228,25 +230,17 @@ def is_likely_spam(body: str, keywords: Optional[List[str]] = None, filter_urls:
     if not keywords:
         keywords = []
     keywords += _keywords + _urls
-    
-    keywords += get_config("github issues", {}).get("spam keywords",[])
+
+    keywords += get_config("github issues", {}).get("spam keywords", [])
 
     if not body:
         return False
     body = body.lower()
-    if any(
-        [
-            keyword in body
-            for keyword in keywords
-        ]
-    ):
+    if any([keyword in body for keyword in keywords]):
         return True
 
     if filter_urls:
-        url_regex = re.compile(
-            r'(https?:\/\/[^\s]+)', 
-            flags=re.IGNORECASE
-        )
+        url_regex = re.compile(r"(https?:\/\/[^\s]+)", flags=re.IGNORECASE)
         if re.search(url_regex, body):
             return True
 
