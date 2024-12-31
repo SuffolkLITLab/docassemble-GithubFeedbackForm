@@ -169,7 +169,7 @@ def feedback_link(
 
 
 def is_likely_spam(
-    body: str, keywords: Optional[List[str]] = None, filter_urls: bool = True
+    body: Optional[str], keywords: Optional[List[str]] = None, filter_urls: bool = True
 ) -> bool:
     """
     Check if the body of the issue is likely spam based on a set of keywords and URLs.
@@ -178,7 +178,7 @@ def is_likely_spam(
     or passed as parameters, or both.
 
     Args:
-        body (str): the body of the issue
+        body (Optional[str]): the body of the issue
         keywords (Optional[List[str]]): a list of keywords that are likely spam, defaults to a set of keywords
             from the global configuration under the `github issues: spam keywords` key
     """
