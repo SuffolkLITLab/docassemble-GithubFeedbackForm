@@ -4,6 +4,7 @@ import requests
 from typing import Dict, Optional, List, Union, Any
 from urllib.parse import urlencode, quote_plus
 from docassemble.base.util import log, get_config, interview_url
+import re
 
 # reference: https://gist.github.com/JeffPaine/3145490
 # https://docs.github.com/en/free-pro-team@latest/rest/reference/issues#create-an-issue
@@ -167,29 +168,82 @@ def feedback_link(
     )
 
 
-def is_likely_spam(body: Optional[str]) -> bool:
+def is_likely_spam(
+    body: Optional[str], keywords: Optional[List[str]] = None, filter_urls: bool = True
+) -> bool:
+    """
+    Check if the body of the issue is likely spam based on a set of keywords and URLs.
+
+    Some keywords are hardcoded, but additional keywords can be added to the global config
+    or passed as parameters, or both.
+
+    Args:
+        body (Optional[str]): the body of the issue
+        keywords (Optional[List[str]]): a list of keywords that are likely spam, defaults to a set of keywords
+            from the global configuration under the `github issues: spam keywords` key
+    """
+    _urls = ["leadgeneration.com", "leadmagnet.com"]
+    _keywords = [
+        "100 times more effective",
+        "adult dating",
+        "backlink",
+        "backlinks",
+        "binary options",
+        "bitcoin investment",
+        "cheap hosting",
+        "cheap meds",
+        "cialis",
+        "credit repair fast",
+        "earn money online",
+        "email me",
+        "escort service",
+        "forex trading",
+        "free gift cards",
+        "free trial",
+        "get rich quick",
+        "increase website traffic",
+        "international long distance calling",
+        "keep this info confidential",
+        "lead feature",
+        "lead generation",
+        "lottery winner",
+        "market your business",
+        "nigerian prince",
+        "online casino",
+        "payment/deposit handler",
+        "reliable business representative",
+        "remote job opportunity",
+        "results are astounding",
+        "send an email",
+        "seo services",
+        "split the funds",
+        "turkish bank",
+        "unsubscribe",
+        "viagra",
+        "visit this link",
+        "web lead",
+        "web visitors",
+        "work from home",
+        "your late relative",
+    ]
+
+    if not keywords:
+        keywords = []
+    keywords += _keywords + _urls
+
+    keywords += get_config("github issues", {}).get("spam keywords", [])
+
     if not body:
         return False
     body = body.lower()
-    if any([url in body for url in {"leadgeneration.com", "leadmagnet.com"}]):
+    if any([keyword in body for keyword in keywords]):
         return True
-    if any(
-        [
-            keyword in body
-            for keyword in {
-                "free trial",
-                "unsubscribe",
-                "web visitors into leads",
-                "international long distance calling",
-                "100 times more effective",
-                "web visitors",
-                "lead feature",
-                "web lead",
-                "lead generation",
-            }
-        ]
-    ):
-        return True
+
+    if filter_urls:
+        url_regex = re.compile(r"(https?:\/\/[^\s]+)", flags=re.IGNORECASE)
+        if re.search(url_regex, body):
+            return True
+
     return False
 
 
