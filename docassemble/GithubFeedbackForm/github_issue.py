@@ -5,6 +5,7 @@ from typing import Dict, Optional, List, Union, Any
 from urllib.parse import urlencode, quote_plus
 from docassemble.base.util import log, get_config, interview_url
 import re
+
 try:
     import google.generativeai as genai
 except:
@@ -24,6 +25,7 @@ __all__ = [
     "prefill_github_issue_url",
 ]
 USERNAME = get_config("github issues", {}).get("username")
+
 
 def _get_token() -> Optional[str]:
     return (get_config("github issues") or {}).get("token")
@@ -172,7 +174,12 @@ def feedback_link(
     )
 
 
-def is_likely_spam_from_genai(body: Optional[str], context:Optional[str] = None, gemini_api_key:Optional[str] = None, model="gemini-2.0-flash-exp") -> bool:
+def is_likely_spam_from_genai(
+    body: Optional[str],
+    context: Optional[str] = None,
+    gemini_api_key: Optional[str] = None,
+    model="gemini-2.0-flash-exp",
+) -> bool:
     """
     Check if the body of the issue is likely spam with the help of Google Gemini Flash experimental.
 
@@ -189,28 +196,28 @@ def is_likely_spam_from_genai(body: Optional[str], context:Optional[str] = None,
 
     if not gemini_api_key:
         gemini_api_key = get_config("google gemini api key")
-    
+
     if not gemini_api_key:
         log("Not using Google Gemini Flash to check for spam: no token provided")
         return False
-    
+
     try:
         genai.configure(api_key=gemini_api_key)
         model = genai.GenerativeModel(
             model_name="gemini-2.0-flash-exp",
-            system_instruction = f"""
+            system_instruction=f"""
                 You are reviewing a feedback form for {context}. Your job is to allow as many
                 relevant feedback responses as possible while filtering out irrelevant and spam feedback,
                 especially targeted advertising that isn't pointing out a problem on the guided interview.
 
                 Rate the user's feedback as 'spam' or 'not spam' based on the context of the guided interview.
                 Answer only with the exact keywords: 'spam' or 'not spam'.
-                """
+                """,
         )
     except Exception as e:
         log(f"Error configuring Google Gemini Flash: {e}")
         return False
-    
+
     try:
         response = model.generate_content(body)
         if response.text.strip() == "spam":
