@@ -186,7 +186,7 @@ def is_likely_spam_from_genai(
     Args:
         body (Optional[str]): the body of the issue
         context (Optional[str]): the context of the issue to help rate it as spam or not, defaults to a guided interview in the legal context
-        gemini_token (Optional[str]): the token for the Google Gemini Flash API
+        gemini_api_key (Optional[str]): the token for the Google Gemini Flash API
     """
     if not body:
         return False
