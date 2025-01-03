@@ -186,7 +186,9 @@ def is_likely_spam_from_genai(
     Args:
         body (Optional[str]): the body of the issue
         context (Optional[str]): the context of the issue to help rate it as spam or not, defaults to a guided interview in the legal context
-        gemini_api_key (Optional[str]): the token for the Google Gemini Flash API
+        gemini_api_key (Optional[str]): the token for the Google Gemini Flash API, can be specified in the global config as `google gemini api key`
+        model (Optional[str]): the model to use for the spam detection, defaults to "gemini-2.0-flash-exp", can be specified in the global config
+            as `github issues: spam model`
     """
     if not body:
         return False
@@ -201,10 +203,15 @@ def is_likely_spam_from_genai(
         log("Not using Google Gemini Flash to check for spam: no token provided")
         return False
 
+    if not model:
+        model = get_config("github issues", {}).get(
+            "spam model", "gemini-2.0-flash-exp"
+        )
+
     try:
         genai.configure(api_key=gemini_api_key)
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-exp",
+            model_name=model,
             system_instruction=f"""
                 You are reviewing a feedback form for {context}. Your job is to allow as many
                 relevant feedback responses as possible while filtering out irrelevant and spam feedback,
@@ -229,7 +236,10 @@ def is_likely_spam_from_genai(
 
 
 def is_likely_spam(
-    body: Optional[str], keywords: Optional[List[str]] = None, filter_urls: bool = True
+    body: Optional[str],
+    keywords: Optional[List[str]] = None,
+    filter_urls: bool = True,
+    model: Optional[str] = None,
 ) -> bool:
     """
     Check if the body of the issue is likely spam based on a set of keywords and URLs.
@@ -239,7 +249,7 @@ def is_likely_spam(
 
     Args:
         body (Optional[str]): the body of the issue
-        keywords (Optional[List[str]]): a list of keywords that are likely spam, defaults to a set of keywords
+        keywords (Optional[List[str]]): a list of additional keywords that are likely spam, defaults to a set of keywords
             from the global configuration under the `github issues: spam keywords` key
     """
 
@@ -305,7 +315,7 @@ def is_likely_spam(
         if re.search(url_regex, body):
             return True
 
-    return is_likely_spam_from_genai(body)
+    return is_likely_spam_from_genai(body, model=model)
 
 
 def prefill_github_issue_url(
