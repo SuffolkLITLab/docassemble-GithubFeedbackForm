@@ -311,26 +311,33 @@ need:
   - package_version
   - filename
 code: |
-  if not task_performed('issue noted', persistent=True):
-    saved_uuid
-    if showifdef('would_be_on_panel', False):
-      add_panel_participant(panel_email)
-    if should_send_to_github:
-      issue_url
-      if issue_url:
-        if saved_uuid:
-          set_feedback_github_url(saved_uuid, issue_url)
-      else:
-        al_error_email
-        log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
-        if al_error_email and not is_likely_spam(issue_template.content):
-          log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-          send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
-        else:
-          log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+  if is_likely_spam(issue_template.content):
+    log("Not saving feedback because it looks like spam")
     mark_task_as_performed('issue noted', persistent=True)
+    issue_url = None
+    saved_uuid = None
+    note_issue = False
   else:
-    log("Already sent feedback to github from a feedback interview, not going to send again")
+    if not task_performed('issue noted', persistent=True):
+      saved_uuid
+      if showifdef('would_be_on_panel', False):
+        add_panel_participant(panel_email)
+      if should_send_to_github:
+        issue_url
+        if issue_url:
+          if saved_uuid:
+            set_feedback_github_url(saved_uuid, issue_url)
+        else:
+          al_error_email
+          log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
+          if al_error_email and not is_likely_spam(issue_template.content):
+            log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
+            send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
+          else:
+            log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+      mark_task_as_performed('issue noted', persistent=True)
+    else:
+      log("Already sent feedback to github from a feedback interview, not going to send again")
   note_issue = True
 ---
 code: |

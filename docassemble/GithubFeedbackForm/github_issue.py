@@ -5,6 +5,10 @@ from typing import Dict, Optional, List, Union, Any
 from urllib.parse import urlencode, quote_plus
 from docassemble.base.util import log, get_config, interview_url
 import re
+try:
+    import google.generativeai as genai
+except:
+    pass
 
 # reference: https://gist.github.com/JeffPaine/3145490
 # https://docs.github.com/en/free-pro-team@latest/rest/reference/issues#create-an-issue
@@ -16,10 +20,10 @@ __all__ = [
     "make_github_issue",
     "feedback_link",
     "is_likely_spam",
+    "is_likely_spam_from_genai",
     "prefill_github_issue_url",
 ]
 USERNAME = get_config("github issues", {}).get("username")
-
 
 def _get_token() -> Optional[str]:
     return (get_config("github issues") or {}).get("token")
@@ -168,6 +172,55 @@ def feedback_link(
     )
 
 
+def is_likely_spam_from_genai(body: Optional[str], context:Optional[str] = None, gemini_api_key:Optional[str] = None, model="gemini-2.0-flash-exp") -> bool:
+    """
+    Check if the body of the issue is likely spam with the help of Google Gemini Flash experimental.
+
+    Args:
+        body (Optional[str]): the body of the issue
+        context (Optional[str]): the context of the issue to help rate it as spam or not, defaults to a guided interview in the legal context
+        gemini_token (Optional[str]): the token for the Google Gemini Flash API
+    """
+    if not body:
+        return False
+
+    if not context:
+        context = "a guided interview in the legal context"
+
+    if not gemini_api_key:
+        gemini_api_key = get_config("google gemini api key")
+    
+    if not gemini_api_key:
+        log("Not using Google Gemini Flash to check for spam: no token provided")
+        return False
+    
+    try:
+        genai.configure(api_key=gemini_api_key)
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash-exp",
+            system_instruction = f"""
+                You are reviewing a feedback form for {context}. Your job is to allow as many
+                relevant feedback responses as possible while filtering out irrelevant and spam feedback,
+                especially targeted advertising that isn't pointing out a problem on the guided interview.
+
+                Rate the user's feedback as 'spam' or 'not spam' based on the context of the guided interview.
+                Answer only with the exact keywords: 'spam' or 'not spam'.
+                """
+        )
+    except Exception as e:
+        log(f"Error configuring Google Gemini Flash: {e}")
+        return False
+    
+    try:
+        response = model.generate_content(body)
+        if response.text.strip() == "spam":
+            return True
+    except Exception as e:
+        log(f"Error using Google Gemini Flash: {e}")
+        return False
+    return False
+
+
 def is_likely_spam(
     body: Optional[str], keywords: Optional[List[str]] = None, filter_urls: bool = True
 ) -> bool:
@@ -182,6 +235,7 @@ def is_likely_spam(
         keywords (Optional[List[str]]): a list of keywords that are likely spam, defaults to a set of keywords
             from the global configuration under the `github issues: spam keywords` key
     """
+
     _urls = ["leadgeneration.com", "leadmagnet.com"]
     _keywords = [
         "100 times more effective",
@@ -244,7 +298,7 @@ def is_likely_spam(
         if re.search(url_regex, body):
             return True
 
-    return False
+    return is_likely_spam_from_genai(body)
 
 
 def prefill_github_issue_url(
