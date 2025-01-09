@@ -8,7 +8,7 @@ import re
 
 try:
     import google.generativeai as genai
-except:
+except ImportError:
     pass
 
 # reference: https://gist.github.com/JeffPaine/3145490
@@ -186,27 +186,22 @@ def is_likely_spam_from_genai(
     Args:
         body (Optional[str]): the body of the issue
         context (Optional[str]): the context of the issue to help rate it as spam or not, defaults to a guided interview in the legal context
-        gemini_api_key (Optional[str]): the token for the Google Gemini Flash API, can be specified in the global config as `google gemini api key`
+        gemini_api_key (Optional[str]): the API key for the Google Gemini Flash API, can be specified in the global config as `google gemini api key`
         model (Optional[str]): the model to use for the spam detection, defaults to "gemini-2.0-flash-exp", can be specified in the global config
             as `github issues: spam model`
     """
     if not body:
         return False
+    
+    model = model or get_config("github issues", {}).get("spam model", "gemini-2.0-flash-exp")
+    gemini_api_key = gemini_api_key or get_config("google gemini api key")
 
-    if not context:
-        context = "a guided interview in the legal context"
-
-    if not gemini_api_key:
-        gemini_api_key = get_config("google gemini api key")
-
-    if not gemini_api_key:
-        log("Not using Google Gemini Flash to check for spam: no token provided")
+    if not gemini_api_key: # not passed as a parameter OR in the global config
+        log("Not using Google Gemini Flash to check for spam: no API key provided")
         return False
 
-    if not model:
-        model = get_config("github issues", {}).get(
-            "spam model", "gemini-2.0-flash-exp"
-        )
+    if context is None: # empty string is a valid input
+        context = "a guided interview in the legal context"
 
     try:
         genai.configure(api_key=gemini_api_key)
@@ -221,14 +216,12 @@ def is_likely_spam_from_genai(
                 Answer only with the exact keywords: 'spam' or 'not spam'.
                 """,
         )
-    except Exception as e:
-        log(f"Error configuring Google Gemini Flash: {e}")
-        return False
 
-    try:
         response = model.generate_content(body)
         if response.text.strip() == "spam":
             return True
+    except NameError:
+        log(f"Error using Google Gemini Flash: the `google.generativeai` module is not available")
     except Exception as e:
         log(f"Error using Google Gemini Flash: {e}")
         return False
