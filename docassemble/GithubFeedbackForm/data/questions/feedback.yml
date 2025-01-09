@@ -81,11 +81,11 @@ subquestion: |
   The information you type here will be publicly available. That means anyone
   will be able to see it. Use this form to tell us about problems that do not
   include any personal information.
-  
+
   ${ collapse_template(al_how_to_get_legal_help) }
 
   Thank you for telling us about your experience with this website.
-  
+
 fields:
   - no label: reason
     input type: radio
@@ -158,12 +158,12 @@ decoration: opinion
 subquestion: |
   This form is designed to be used by testers and community
   stakeholders.
-  
+
   The information you type here will be publicly available. That means anyone
   will be able to see it.
-  
+
   ${ collapse_template(al_how_to_get_legal_help) }
-  
+
 fields:
   - "**What would you like to tell us about?**": reason
     input type: radio
@@ -236,7 +236,7 @@ subject: |
   Do you need more help?
 content: |
   If you need more help, these are free resources:
-  
+
   - [Find Free Legal help - Legal Services Corporation](https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help)
 
   - [Hire a lawyer](https://www.americanbar.org/groups/legal_services/flh-home/flh-hire-a-lawyer/)
@@ -248,7 +248,7 @@ question: |
 decoration: lifebuoy
 subquestion: |
   We are sorry that we couldn't do more to help you.
-  
+
   ${ al_how_to_get_legal_help }
 
 buttons:
@@ -261,7 +261,7 @@ question: |
 decoration: opinion
 subquestion: |
   We appreciate you letting us know how we are doing.
-  
+
   % if issue_url:
   If you would like to track this issue, you can [follow 
   it](${issue_url}) on GitHub.
@@ -304,6 +304,8 @@ content: |
   % endif
 ---
 ########################## Send to GitHub code ##########################
+only sets:
+  - note_issue
 need:
   - should_send_to_github
   - question_id
@@ -311,26 +313,38 @@ need:
   - package_version
   - filename
 code: |
-  if not task_performed('issue noted', persistent=True):
-    saved_uuid
-    if showifdef('would_be_on_panel', False):
-      add_panel_participant(panel_email)
-    if should_send_to_github:
-      issue_url
-      if issue_url:
-        if saved_uuid:
-          set_feedback_github_url(saved_uuid, issue_url)
-      else:
-        al_error_email
-        log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
-        if al_error_email and not is_likely_spam(issue_template.content):
-          log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
-          send_email(to=al_error_email, subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}", template=issue_template)
-        else:
-          log(f"~~~USER FEEDBACK~~~ {github_repo} -{issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+  if task_performed('issue noted'):
+    pass
+  elif is_likely_spam(issue_template.content):
+    log("Not saving feedback because it looks like spam")
     mark_task_as_performed('issue noted', persistent=True)
+    issue_url, saved_uuid = None
+    note_issue = False # End block early
   else:
-    log("Already sent feedback to github from a feedback interview, not going to send again")
+    saved_uuid # Trigger the code to save locally on the server and optionally link the session answers. We do this regardless of whether we send to GitHub
+    if showifdef('would_be_on_panel'):
+      add_panel_participant(panel_email)
+
+    if should_send_to_github:
+      issue_url # Trigger the code to save as a GitHub issue
+      if issue_url and saved_uuid:
+        # Link the GitHub issue to the saved feedback in database
+        set_feedback_github_url(saved_uuid, issue_url)
+      else:
+        log(f"This form was not able to add an issue on the {github_user}/{github_repo} repo. Check your config.")
+        if al_error_email:
+          log(f"Unable to create issue on repo {github_repo}, falling back to emailing {al_error_email}")
+          send_email(
+              to=al_error_email,
+              subject=f"{github_repo} - {issue_template.subject_as_html(trim=True)}",
+              template=issue_template
+          )
+        else:
+          log(f"~~~USER FEEDBACK~~~ {github_repo} - {issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
+      else:
+        issue_url = None
+    mark_task_as_performed('issue noted', persistent=True)
+
   note_issue = True
 ---
 code: |
