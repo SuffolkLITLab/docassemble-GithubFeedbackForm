@@ -192,15 +192,17 @@ def is_likely_spam_from_genai(
     """
     if not body:
         return False
-    
-    model = model or get_config("github issues", {}).get("spam model", "gemini-2.0-flash-exp")
+
+    model = model or get_config("github issues", {}).get(
+        "spam model", "gemini-2.0-flash-exp"
+    )
     gemini_api_key = gemini_api_key or get_config("google gemini api key")
 
-    if not gemini_api_key: # not passed as a parameter OR in the global config
+    if not gemini_api_key:  # not passed as a parameter OR in the global config
         log("Not using Google Gemini Flash to check for spam: no API key provided")
         return False
 
-    if context is None: # empty string is a valid input
+    if context is None:  # empty string is a valid input
         context = "a guided interview in the legal context"
 
     try:
@@ -221,7 +223,9 @@ def is_likely_spam_from_genai(
         if response.text.strip() == "spam":
             return True
     except NameError:
-        log(f"Error using Google Gemini Flash: the `google.generativeai` module is not available")
+        log(
+            f"Error using Google Gemini Flash: the `google.generativeai` module is not available"
+        )
     except Exception as e:
         log(f"Error using Google Gemini Flash: {e}")
         return False
