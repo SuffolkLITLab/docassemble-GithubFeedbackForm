@@ -1,7 +1,7 @@
 """initial alembic migration
 
 Revision ID: 542797f969ea
-Revises: 
+Revises:
 Create Date: 2023-10-09 17:06:05.463730
 
 """
