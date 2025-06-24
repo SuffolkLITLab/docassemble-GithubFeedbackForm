@@ -341,8 +341,8 @@ code: |
           )
         else:
           log(f"~~~USER FEEDBACK~~~ {github_repo} - {issue_template.subject_as_html(trim=True)} - {issue_template.content_as_html(trim=True)}")
-      else:
-        issue_url = None
+    else:
+      issue_url = None
     mark_task_as_performed('issue noted', persistent=True)
 
   note_issue = True
