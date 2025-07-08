@@ -365,10 +365,14 @@ def make_github_issue(
     """
     Create a new GitHub issue and return the URL.
 
-    template - a docassemble template that overrides `title` and `body`
-    title    - the title for the GitHub issue
-    body     - the body of the GitHub issue
-    label    - optional label to add *if* we can verify or create it
+    Args:
+        template: a docassemble template that overrides `title` and `body`
+        title: the title for the GitHub issue
+        body: the body of the GitHub issue
+        label: optional label to add *if* we can verify or create it
+    
+    Returns:
+        str, the URL for the label if it exists, or None if the issue could not be created
     """
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
 
