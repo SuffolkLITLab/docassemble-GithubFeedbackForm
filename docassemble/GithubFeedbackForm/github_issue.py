@@ -372,6 +372,7 @@ def make_github_issue(
     """
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
 
+
     # Abort early if the configuration or repo owner is invalid
     if not valid_github_issue_config():
         log(
@@ -390,6 +391,18 @@ def make_github_issue(
         "Authorization": f"token {_get_token()}",
         "Accept": "application/vnd.github.v3+json",
     }
+
+    # Abort early for private repos
+    repo_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    repo_resp = requests.get(repo_url, headers=headers)
+
+    if repo_resp.status_code != 200:
+        log(
+            f"Cannot access repo {repo_owner}/{repo_name}: "
+            f"{repo_resp.status_code} {repo_resp.text}. Maybe it is a private repo?"
+            "Check that the PAT has the correct scopes and that the user can write to the repo."
+        )
+        return None
 
     # ------------------------------------------------------------------
     # 1. Figure out whether we can safely apply the label
