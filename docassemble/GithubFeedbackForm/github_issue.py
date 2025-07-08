@@ -370,12 +370,11 @@ def make_github_issue(
         title: the title for the GitHub issue
         body: the body of the GitHub issue
         label: optional label to add *if* we can verify or create it
-    
+
     Returns:
         str, the URL for the label if it exists, or None if the issue could not be created
     """
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
-
 
     # Abort early if the configuration or repo owner is invalid
     if not valid_github_issue_config():
@@ -414,7 +413,9 @@ def make_github_issue(
     apply_label = False  # only set to True when we're sure it exists
 
     if label:
-        labels_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels/{label}"
+        labels_url = (
+            f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels/{label}"
+        )
         has_label_resp = requests.get(labels_url, headers=headers)
 
         if has_label_resp.status_code == 200:
@@ -454,9 +455,15 @@ def make_github_issue(
     # ------------------------------------------------------------------
     # 2. Derive title/body from a template, if supplied
     # ------------------------------------------------------------------
-    if template:
+    if template and not (title and body):
         title = template.subject
         body = template.content
+
+    if not body:
+        return None
+
+    if not title:
+        title = "User feedback"
 
     # Reject obvious spam before calling GitHub
     if is_likely_spam(body):
@@ -470,7 +477,7 @@ def make_github_issue(
         "title": title,
         "body": body,
     }
-    if apply_label:  # only include when we *know* the label exists
+    if apply_label and label is not None:
         data["labels"] = [label]
 
     response = requests.post(make_issue_url, data=json.dumps(data), headers=headers)
