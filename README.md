@@ -101,6 +101,8 @@ This package is designed to support the following workflow:
    issue. This interview also will show you the list of emails of users who agreed to join a
    qualitative research panel.
 
+6. If the issue label "user feedback" is present on the repo, it will be used by default to label incoming issues.
+
 ## Author
 
 Quinten Steenhuis, qsteenhuis@suffolk.edu

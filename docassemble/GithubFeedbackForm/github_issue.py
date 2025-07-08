@@ -363,23 +363,26 @@ def make_github_issue(
     label: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Create a new Github issue and return the URL.
+    Create a new GitHub issue and return the URL.
 
-    template - the docassemble template for the github issue. Overrides `title` and `body` if provided.
-    title - the title for the github issue
-    body - the body of the github issue
+    template - a docassemble template that overrides `title` and `body`
+    title    - the title for the GitHub issue
+    body     - the body of the GitHub issue
+    label    - optional label to add *if* we can verify or create it
     """
     make_issue_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
-    # Headers
+
+    # Abort early if the configuration or repo owner is invalid
     if not valid_github_issue_config():
         log(
-            "Error creating issue: No valid GitHub token provided. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
+            "Error creating issue: No valid GitHub token provided. "
+            "See https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
         )
         return None
-
     if repo_owner.lower() not in _get_allowed_repo_owners():
         log(
-            f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
+            f"Error creating issue: repositories owned by {repo_owner} are not permitted. "
+            "See https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
         )
         return None
 
@@ -388,46 +391,75 @@ def make_github_issue(
         "Accept": "application/vnd.github.v3+json",
     }
 
+    # ------------------------------------------------------------------
+    # 1. Figure out whether we can safely apply the label
+    # ------------------------------------------------------------------
+    apply_label = False  # only set to True when we're sure it exists
+
     if label:
-        labels_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels"
-        has_label_resp = requests.get(labels_url + "/" + label, headers=headers)
-        if has_label_resp.status_code == 404:
+        labels_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels/{label}"
+        has_label_resp = requests.get(labels_url, headers=headers)
+
+        if has_label_resp.status_code == 200:
+            # Label already exists in the repo
+            apply_label = True
+
+        elif has_label_resp.status_code == 404:
+            # Try to create the label; this may fail if the token lacks permission
             label_data = {
                 "name": label,
                 "description": "Feedback from a Docassemble Interview",
                 "color": "002E60",
             }
             make_label_resp = requests.post(
-                labels_url, data=json.dumps(label_data), headers=headers
+                labels_url.rsplit("/", 1)[0],  # POST to /labels (collection)
+                data=json.dumps(label_data),
+                headers=headers,
             )
             if make_label_resp.status_code == 201:
-                log("Created the {label} label for the {make_issue_url} repo")
+                log(
+                    f"Created the '{label}' label for the "
+                    f"{repo_owner}/{repo_name} repository"
+                )
+                apply_label = True
             else:
                 log(
-                    f"Was not able to find nor create the {label} label: {make_label_resp.text}"
+                    f"Could not create label '{label}': {make_label_resp.status_code} "
+                    f"{make_label_resp.text}"
                 )
-                label = None
+        else:
+            # 403, 422, etc. → most likely a permissions issue; skip using the label
+            log(
+                f"Unable to verify label '{label}': {has_label_resp.status_code} "
+                f"{has_label_resp.text}"
+            )
 
+    # ------------------------------------------------------------------
+    # 2. Derive title/body from a template, if supplied
+    # ------------------------------------------------------------------
     if template:
         title = template.subject
         body = template.content
 
+    # Reject obvious spam before calling GitHub
     if is_likely_spam(body):
-        log("Error creating issue: the body of the issue is caught as spam")
+        log("Error creating issue: the body of the issue was classified as spam")
         return None
 
-    # Create our issue
-    data: Dict[str, Union[None, str, List[str]]] = {
+    # ------------------------------------------------------------------
+    # 3. Assemble and POST the issue
+    # ------------------------------------------------------------------
+    data: Dict[str, Union[str, List[str]]] = {
         "title": title,
         "body": body,
     }
-    if label:
+    if apply_label:  # only include when we *know* the label exists
         data["labels"] = [label]
 
-    # Add the issue to our repository
     response = requests.post(make_issue_url, data=json.dumps(data), headers=headers)
+
     if response.status_code == 201:
         return response.json().get("html_url")
     else:
-        log(f'Could not create Issue "{title}", results {response.text}')
+        log(f'Could not create issue "{title}": {response.status_code} {response.text}')
         return None
