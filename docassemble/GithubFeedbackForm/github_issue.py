@@ -371,6 +371,8 @@ def make_github_issue(
         body: the body of the GitHub issue
         label: optional label to add *if* we can verify or create it
 
+    At least one of template, title, and body is required.
+
     Returns:
         str, the URL for the label if it exists, or None if the issue could not be created
     """
@@ -413,10 +415,11 @@ def make_github_issue(
     apply_label = False  # only set to True when we're sure it exists
 
     if label:
-        labels_url = (
-            f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels/{label}"
+        make_labels_url = (
+            f"https://api.github.com/repos/{repo_owner}/{repo_name}/labels"
         )
-        has_label_resp = requests.get(labels_url, headers=headers)
+        get_labels_url = f"{make_labels_url}/{label}"
+        has_label_resp = requests.get(get_labels_url, headers=headers)
 
         if has_label_resp.status_code == 200:
             # Label already exists in the repo
@@ -430,7 +433,7 @@ def make_github_issue(
                 "color": "002E60",
             }
             make_label_resp = requests.post(
-                labels_url.rsplit("/", 1)[0],  # POST to /labels (collection)
+                make_labels_url,
                 data=json.dumps(label_data),
                 headers=headers,
             )
@@ -455,12 +458,17 @@ def make_github_issue(
     # ------------------------------------------------------------------
     # 2. Derive title/body from a template, if supplied
     # ------------------------------------------------------------------
-    if template and not (title and body):
-        title = template.subject
-        body = template.content
+    if template:
+        if hasattr(template, "subject"):
+            title = template.subject
+        if hasattr(template, "body"):
+            body = template.content
+
+    if not title and not body:
+        return None
 
     if not body:
-        return None
+        body = ""
 
     if not title:
         title = "User feedback"
