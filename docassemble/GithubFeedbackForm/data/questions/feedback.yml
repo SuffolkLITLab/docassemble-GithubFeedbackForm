@@ -318,7 +318,7 @@ code: |
   elif is_likely_spam(issue_template.content):
     log("Not saving feedback because it looks like spam")
     mark_task_as_performed('issue noted', persistent=True)
-    issue_url, saved_uuid = None
+    issue_url = saved_uuid = None
     note_issue = False # End block early
   else:
     saved_uuid # Trigger the code to save locally on the server and optionally link the session answers. We do this regardless of whether we send to GitHub
