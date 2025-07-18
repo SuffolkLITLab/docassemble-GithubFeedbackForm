@@ -461,7 +461,7 @@ def make_github_issue(
     if template:
         if hasattr(template, "subject"):
             title = template.subject
-        if hasattr(template, "body"):
+        if hasattr(template, "content"):
             body = template.content
 
     if not title and not body:
