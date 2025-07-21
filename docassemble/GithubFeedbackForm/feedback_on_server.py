@@ -5,6 +5,7 @@ import json
 from typing import Optional, Iterable, List, Tuple
 from datetime import datetime
 from sqlalchemy import (
+    desc,
     insert,
     update,
     select,
@@ -250,6 +251,7 @@ def get_good_or_bad(interview: Optional[str] = None) -> List:
     if interview:
         stmt = stmt.where(good_or_bad_table.c.interview == interview)
     stmt = stmt.group_by(good_or_bad_table.c.interview, good_or_bad_table.c.version)
+    stmt = stmt.order_by(desc(good_or_bad_table.c.interview), desc(good_or_bad_table.c.version))
     with engine.begin() as conn:
         results = conn.execute(stmt)
         return [dict(row) for row in results.mappings()]
