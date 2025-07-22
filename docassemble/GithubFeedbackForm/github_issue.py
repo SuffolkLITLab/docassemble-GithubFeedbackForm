@@ -322,7 +322,7 @@ def prefill_github_issue_url(
     title=None,
     body=None,
     label=None,
-) -> Optional[str]:
+) -> str:
     """
     Makes a URL that when visited, pre-fills part of the Github issue. It doesn't automatically make a Github issue for you.
 
@@ -337,12 +337,6 @@ def prefill_github_issue_url(
         )
     if not repo_name:
         repo_name = "docassemble-AssemblyLine"  # TODO(brycew): should this be the default repo? it is in `feedback.yml`
-    # TODO(brycew): this function doesn't make issues: do we still want to prevent making URLs for other repos?
-    if repo_owner.lower() not in _get_allowed_repo_owners():
-        log(
-            f"Error creating issue: this form is not permitted to add issues to repositories owned by {repo_owner}. Check your config and see https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm#getting-started"
-        )
-        return None
 
     if template:
         title = template.subject
