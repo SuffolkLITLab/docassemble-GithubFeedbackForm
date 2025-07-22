@@ -2,6 +2,7 @@ from testcontainers.postgres import PostgresContainer
 from unittest import TestCase
 from unittest.mock import patch
 
+
 class TestFeedbackOnServer(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -17,6 +18,7 @@ class TestFeedbackOnServer(TestCase):
     def test_minimal_db(self, url1):
         url1.return_value = self.__class__._psql_url
         from .feedback_on_server import save_good_or_bad, get_good_or_bad
+
         save_good_or_bad(1, interview="unittest", version="1.0.0")
         save_good_or_bad(-1, interview="unittest", version="1.0.0")
 
@@ -26,10 +28,10 @@ class TestFeedbackOnServer(TestCase):
 
         ratings = get_good_or_bad("unittest")
         self.assertEqual(len(ratings), 2)
-        self.assertListEqual([r["interview"] for r in ratings], ["unittest"]*2)
-        if ratings[0]['version'] == "1.0.1":
-          self.assertEqual(ratings[0]["average"], 1)
-          self.assertEqual(ratings[1]["average"], 0)
+        self.assertListEqual([r["interview"] for r in ratings], ["unittest"] * 2)
+        if ratings[0]["version"] == "1.0.1":
+            self.assertEqual(ratings[0]["average"], 1)
+            self.assertEqual(ratings[1]["average"], 0)
         else:
-          self.assertEqual(ratings[0]["average"], 0)
-          self.assertEqual(ratings[1]["average"], 1)
+            self.assertEqual(ratings[0]["average"], 0)
+            self.assertEqual(ratings[1]["average"], 1)
