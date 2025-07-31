@@ -107,6 +107,8 @@ feedback_session_table = Table(
     Column("html_url", String),
     Column("archived", Boolean),
     Column("datetime", DateTime),
+    Column("github_user", String, nullable=True),
+    Column("github_repo_name", String, nullable=True),
 )
 
 good_or_bad_table = Table(
@@ -136,7 +138,13 @@ upgrade_db(
 
 
 def save_feedback_info(
-    interview: str, *, session_id: Optional[str] = None, template=None, body=None
+    interview: str,
+    *,
+    session_id: Optional[str] = None,
+    template=None,
+    body=None,
+    github_user: Optional[str] = None,
+    github_repo_name: Optional[str] = None,
 ) -> Optional[str]:
     """Saves feedback along with optional session information in a SQL DB"""
     if template:
@@ -149,6 +157,8 @@ def save_feedback_info(
             body=body,
             datetime=datetime.now(),
             archived=False,
+            github_user=github_user,
+            github_repo_name=github_repo_name,
         )
         with engine.begin() as conn:
             result = conn.execute(stmt)

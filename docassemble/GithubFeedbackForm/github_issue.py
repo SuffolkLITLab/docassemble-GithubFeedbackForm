@@ -336,7 +336,10 @@ def prefill_github_issue_url(
             or "suffolklitlab"
         )
     if not repo_name:
-        repo_name = "docassemble-AssemblyLine"  # TODO(brycew): should this be the default repo? it is in `feedback.yml`
+        repo_name = (
+            get_config("github issues", {}).get("default repository name")
+            or "[REPO_NAME_UNDEFINED]"
+        )
 
     if template:
         title = template.subject
@@ -345,7 +348,7 @@ def prefill_github_issue_url(
     payload = {"title": title, "body": body}
     url_params = urlencode(payload, quote_via=quote_plus)
 
-    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?{url_params}"
+    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?{url_params}" 
 
 
 def make_github_issue(
