@@ -57,7 +57,11 @@ content: |
   > ${ review['body'] }
 
   % if not review.get('html_url'):
+  % if review.get('github_user'):
+  ${ action_button_html(prefill_github_issue_url(repo_owner=review.get('github_user'), repo_name=review.get('github_repo_name'), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
+  % else:
   ${ action_button_html(prefill_github_issue_url(repo_name=interview.split(":")[0].replace(".", "-"), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
+  % endif
   % else:
   [Link to Github issue](${ review.get('html_url') })
 

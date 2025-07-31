@@ -23,7 +23,7 @@ event: review_text_event
 code: |
   review_text = action_argument('review_text')
   did_react = True
-  save_feedback_info(user_info().filename, body=review_text)
+  save_feedback_info(user_info().filename, body=review_text, github_user=github_user, github_repo_name=github_repo_name)
 ---
 code: |
   def only_once_review_widget(
