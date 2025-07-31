@@ -348,7 +348,7 @@ def prefill_github_issue_url(
     payload = {"title": title, "body": body}
     url_params = urlencode(payload, quote_via=quote_plus)
 
-    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?{url_params}" 
+    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?{url_params}"
 
 
 def make_github_issue(
