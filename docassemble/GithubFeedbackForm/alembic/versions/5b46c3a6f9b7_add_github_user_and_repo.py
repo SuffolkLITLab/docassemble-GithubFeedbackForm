@@ -22,7 +22,7 @@ from sqlalchemy.inspection import inspect
 
 def upgrade():
     inspector = inspect(op.get_bind())
-    columns = [col.name for col in inspector.get_columns("feedback_session")]
+    columns = [col['name'] for col in inspector.get_columns('feedback_session')]
 
     if "github_user" not in columns:
         op.add_column(
