@@ -1,3 +1,5 @@
+# do not pre-load
+
 from testcontainers.postgres import PostgresContainer
 from unittest import TestCase
 from unittest.mock import patch
