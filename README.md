@@ -34,6 +34,11 @@ This package is designed to support the following workflow:
      feedback session linking: True
      # Will ask users filling in feedback if they want to be in a panel, and get their email if they want to
      ask panel: True
+     # (optional) If you need better protection from spam feedback, 
+     # adding the below, and installing the `google.generativeai` package
+     # will use Gemini AI as an additional filter.
+     google gemini api key: ...
+     spam model: "gemini-2.0-flash-exp" # the default
    ```
 
    Note that it is important to provide a list of allowed repository owners.
