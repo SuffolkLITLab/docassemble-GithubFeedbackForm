@@ -52,7 +52,7 @@ setup(name='docassemble.GithubFeedbackForm',
       license='The MIT License (MIT)',
       url='https://courtformsonline.org',
       packages=find_namespace_packages(),
-      install_requires=['docassemble.ALToolbox>=0.6.0'],
+      install_requires=['docassemble.ALToolbox>=0.6.0', 'openai'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/GithubFeedbackForm/', package='docassemble.GithubFeedbackForm'),
      )

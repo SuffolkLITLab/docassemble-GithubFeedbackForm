@@ -7,7 +7,7 @@ from docassemble.base.util import log, get_config, interview_url
 import re
 
 try:
-    import google.generativeai as genai
+    from openai import OpenAI
 except ImportError:
     pass
 
@@ -21,7 +21,8 @@ __all__ = [
     "make_github_issue",
     "feedback_link",
     "is_likely_spam",
-    "is_likely_spam_from_genai",
+    "is_likely_spam_from_openai",
+    "is_likely_spam_from_genai",  # backward compatibility
     "prefill_github_issue_url",
 ]
 USERNAME = get_config("github issues", {}).get("username")
@@ -174,60 +175,83 @@ def feedback_link(
     )
 
 
-def is_likely_spam_from_genai(
+def is_likely_spam_from_openai(
     body: Optional[str],
     context: Optional[str] = None,
-    gemini_api_key: Optional[str] = None,
-    model="gemini-2.0-flash-exp",
+    api_key: Optional[str] = None,
+    model="gpt-4o-mini",
 ) -> bool:
     """
-    Check if the body of the issue is likely spam with the help of Google Gemini Flash experimental.
+    Check if the body of the issue is likely spam with the help of OpenAI compatible API.
 
     Args:
         body (Optional[str]): the body of the issue
         context (Optional[str]): the context of the issue to help rate it as spam or not, defaults to a guided interview in the legal context
-        gemini_api_key (Optional[str]): the API key for the Google Gemini Flash API, can be specified in the global config as `google gemini api key`
-        model (Optional[str]): the model to use for the spam detection, defaults to "gemini-2.0-flash-exp", can be specified in the global config
-            as `github issues: spam model`
+        api_key (Optional[str]): the API key for the OpenAI compatible API, can be specified in the global config as `open ai: key` or `google gemini api key` (for backward compatibility)
+        model (Optional[str]): the model to use for the spam detection, defaults to "gpt-4o-mini", can be specified in the global config
+            as `github issues: spam model` or `open ai: model`
     """
     if not body:
         return False
 
-    model = model or get_config("github issues", {}).get(
-        "spam model", "gemini-2.0-flash-exp"
+    # Try to get model from various config locations for backward compatibility
+    model = (
+        model 
+        or get_config("open ai", {}).get("model")
+        or get_config("github issues", {}).get("spam model") 
+        or "gpt-4o-mini"
     )
-    gemini_api_key = gemini_api_key or get_config("google gemini api key")
+    
+    # Try to get API key from various config locations for backward compatibility
+    api_key = (
+        api_key 
+        or get_config("open ai", {}).get("key")
+        or get_config("google gemini api key")  # backward compatibility
+    )
 
-    if not gemini_api_key:  # not passed as a parameter OR in the global config
-        log("Not using Google Gemini Flash to check for spam: no API key provided")
+    if not api_key:  # not passed as a parameter OR in the global config
+        log("Not using OpenAI compatible API to check for spam: no API key provided")
         return False
 
     if context is None:  # empty string is a valid input
         context = "a guided interview in the legal context"
 
+    # Use the Google Gemini OpenAI-compatible endpoint
+    base_url = get_config("open ai", {}).get("base url") or "https://generativelanguage.googleapis.com/v1beta/openai/"
+
     try:
-        genai.configure(api_key=gemini_api_key)
-        model = genai.GenerativeModel(
-            model_name=model,
-            system_instruction=f"""
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url
+        )
+        
+        system_message = f"""
                 You are reviewing a feedback form for {context}. Your job is to allow as many
                 relevant feedback responses as possible while filtering out irrelevant and spam feedback,
                 especially targeted advertising that isn't pointing out a problem on the guided interview.
 
                 Rate the user's feedback as 'spam' or 'not spam' based on the context of the guided interview.
                 Answer only with the exact keywords: 'spam' or 'not spam'.
-                """,
-        )
+                """
 
-        response = model.generate_content(body)
-        if response.text.strip() == "spam":
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_message.strip()},
+                {"role": "user", "content": body}
+            ],
+            temperature=0.1,
+            max_tokens=10
+        )
+        
+        if response.choices[0].message.content.strip() == "spam":
             return True
     except NameError:
         log(
-            f"Error using Google Gemini Flash: the `google.generativeai` module is not available"
+            f"Error using OpenAI compatible API: the `openai` module is not available"
         )
     except Exception as e:
-        log(f"Error using Google Gemini Flash: {e}")
+        log(f"Error using OpenAI compatible API: {e}")
         return False
     return False
 
@@ -312,7 +336,22 @@ def is_likely_spam(
         if re.search(url_regex, body):
             return True
 
-    return is_likely_spam_from_genai(body, model=model)
+    return is_likely_spam_from_openai(body, model=model)
+
+
+# Backward compatibility alias
+def is_likely_spam_from_genai(
+    body: Optional[str],
+    context: Optional[str] = None,
+    gemini_api_key: Optional[str] = None,
+    model="gpt-4o-mini",
+) -> bool:
+    """
+    Deprecated: Use is_likely_spam_from_openai instead.
+    This function is provided for backward compatibility only.
+    """
+    log("Warning: is_likely_spam_from_genai is deprecated. Use is_likely_spam_from_openai instead.")
+    return is_likely_spam_from_openai(body, context, gemini_api_key, model)
 
 
 def prefill_github_issue_url(
