@@ -35,10 +35,17 @@ This package is designed to support the following workflow:
      # Will ask users filling in feedback if they want to be in a panel, and get their email if they want to
      ask panel: True
      # (optional) If you need better protection from spam feedback, 
-     # adding the below, and installing the `google.generativeai` package
-     # will use Gemini AI as an additional filter.
-     google gemini api key: ...
-     spam model: "gemini-2.0-flash-exp" # the default
+     # using the below configuration with an OpenAI compatible API key
+     # will use AI as an additional filter. Supports both OpenAI and
+     # Google's OpenAI-compatible Gemini API endpoint.
+     open ai:
+       key: YOUR_OPENAI_OR_GEMINI_API_KEY
+       base url: "https://generativelanguage.googleapis.com/v1beta/openai/"  # Use Google's OpenAI-compatible endpoint
+       model: "gpt-4o-mini"  # or your preferred model
+     
+     # Legacy configuration (deprecated but still supported):
+     # google gemini api key: YOUR_GEMINI_API_KEY
+     # spam model: "gpt-4o-mini"
    ```
 
    Note that it is important to provide a list of allowed repository owners.
