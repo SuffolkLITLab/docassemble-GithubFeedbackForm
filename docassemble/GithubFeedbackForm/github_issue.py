@@ -470,11 +470,6 @@ def make_github_issue(
     if not title:
         title = "User feedback"
 
-    # Reject obvious spam before calling GitHub
-    if is_likely_spam(body):
-        log("Error creating issue: the body of the issue was classified as spam")
-        return None
-
     # ------------------------------------------------------------------
     # 3. Assemble and POST the issue
     # ------------------------------------------------------------------
