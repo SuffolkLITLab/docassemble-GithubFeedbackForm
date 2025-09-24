@@ -31,9 +31,5 @@ class TestFeedbackOnServer(TestCase):
         ratings = get_good_or_bad("unittest")
         self.assertEqual(len(ratings), 2)
         self.assertListEqual([r["interview"] for r in ratings], ["unittest"] * 2)
-        if ratings[0]["version"] == "1.0.1":
-            self.assertEqual(ratings[0]["average"], 1)
-            self.assertEqual(ratings[1]["average"], 0)
-        else:
-            self.assertEqual(ratings[0]["average"], 0)
-            self.assertEqual(ratings[1]["average"], 1)
+        self.assertEqual(ratings[0]["average"], 1)
+        self.assertEqual(ratings[1]["average"], 0)
