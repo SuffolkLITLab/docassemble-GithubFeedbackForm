@@ -136,9 +136,6 @@ def feedback_link(
     elif (
         get_config("github issues", {}).get("default repository owner") and github_repo
     ):
-        log(
-            "No github_user provided, using default repository owner from config to get the feedback"
-        )
         _github_user = get_config("github issues", {}).get("default repository owner")
         _github_repo = github_repo
     else:
