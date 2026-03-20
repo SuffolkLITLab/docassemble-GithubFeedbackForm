@@ -164,7 +164,9 @@ def save_feedback_info(
         )
         with engine.begin() as conn:
             result = conn.execute(stmt)
-            id_for_feedback = result.inserted_primary_key[0]
+            id_for_feedback = (
+                result.inserted_primary_key[0] if result.inserted_primary_key else None
+            )
 
         return id_for_feedback
     else:  # can happen if the forwarding interview didn't pass session info
