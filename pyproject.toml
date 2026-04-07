@@ -1,3 +1,27 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docassemble.GithubFeedbackForm"
+version = "0.5.6"
+description = "Integration of GitHub issues with Docassemble interviews for collecting user feedback."
+readme = "README.md"
+authors = [
+    { name="Quinten Steenhuis", email="qsteenhuis@suffolk.edu" },
+]
+dependencies = [
+    "docassemble.ALToolbox>=0.6.0",
+]
+license = "MIT"
+license-files = ["LICENSE*"]
+
+[project.urls]
+GitHub = "https://github.com/SuffolkLITLab/docassemble-GithubFeedbackForm"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
 [tool.black]
 extend-exclude = '(__init__.py|setup.py)'
 
@@ -18,3 +42,13 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "testcontainers.*"
 ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "docassemble.base>=1.4",
+    "docassemble.webapp",
+    "mypy",
+    "types-requests",
+    "testcontainers",
+]
+
