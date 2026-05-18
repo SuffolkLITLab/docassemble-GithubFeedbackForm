@@ -24,12 +24,7 @@ question: |
 subquestion: |
   ${ action_button_html(url_action('toggle_archived'), label="Show archived" if not show_archived else "Hide archived", color="secondary")}
 
-  ${ tabbed_templates_html("Feedback tabs", reviews_table_template, feedback_select_template)}
-help:
-  label: |
-    View Panelists
-  content: |
-    ${ view_panelists }
+  ${ tabbed_templates_html("Feedback tabs", reviews_table_template, feedback_select_template, view_panelists)}
 ---
 template: reviews_table_template
 subject: Review Scores
@@ -45,17 +40,15 @@ content: |
 template: feedback_select_template
 subject: Open answer feedback
 content: |
-  % for interview, review_list in text_reviews.items():
-  <h3 class="h5">In ${ interview }</h3>
+  % for idx, (interview, review_list) in enumerate(text_reviews.items()):
+  <a class="al_toggle" data-bs-toggle="collapse" href="#interview-feedback-${ idx }" role="button" aria-expanded="true" aria-controls="interview-feedback-${ idx }"><h3 class="h5 d-inline">In ${ interview }</h3></a>
+  <div id="interview-feedback-${ idx }" class="collapse show">
   % for review in review_list:
   % if review['archived']:
-  **ARCHIVED**
+  <p><strong>ARCHIVED</strong></p>
   % endif
-
-  On ${ review['datetime'] }:
-
-  > ${ review['body'] }
-
+  <p>On ${ review['datetime'] }:</p>
+  <blockquote class="blockquote fs-6">${ review['body'] }</blockquote>
   % if not review.get('html_url'):
   % if review.get('github_user'):
   ${ action_button_html(prefill_github_issue_url(repo_owner=review.get('github_user'), repo_name=review.get('github_repo_name'), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
@@ -63,8 +56,7 @@ content: |
   ${ action_button_html(prefill_github_issue_url(repo_name=interview.split(":")[0].replace(".", "-"), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
   % endif
   % else:
-  [Link to Github issue](${ review.get('html_url') })
-
+  <a href="${ review.get('html_url') }">Link to Github issue</a>
   % endif
   % if review.get('session_id'):
   ${ action_button_html(url_action('open_session', interview=review['interview'], session_id=review.get('session_id')), label='Open Session', color='secondary') }
@@ -72,11 +64,9 @@ content: |
   % if not review['archived']:
   ${ action_button_html(url_action('mark_as_archived', feedback_id=review['id']), label="Archive", color="danger")}
   % endif
-
-  ---
-
+  <hr>
   % endfor
-
+  </div>
   % endfor
 ---
 template: what_are_reviews_template
@@ -92,6 +82,7 @@ content: |
   affect people's reviews.
 ---
 template: view_panelists
+subject: View Panelists
 content: |
     % for email_and_time in potential_panelists():
     % if isinstance(email_and_time[0], bytes):
@@ -114,6 +105,8 @@ code: |
       text_reviews[info['interview']].append(info)
     else:
       text_reviews[info['interview']] = [info]
+  for interview in text_reviews:
+    text_reviews[interview].sort(key=lambda r: r['datetime'], reverse=True)
 ---
 event: open_session
 code: |
