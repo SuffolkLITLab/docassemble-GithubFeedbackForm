@@ -31,11 +31,14 @@ subject: Review Scores
 content: |
   ${ collapse_template(what_are_reviews_template) }
 
-  Interview file | Version | Number of reviews | Average Score
-  -------------- |---------|-------------------|---------------
+  <table class="table">
+  <thead><tr><th>Interview file</th><th>Version</th><th>Number of reviews</th><th>Average Score</th></tr></thead>
+  <tbody>
   % for review_agg in get_good_or_bad():
-  ${ review_agg['interview'] } | ${ review_agg['version'] } | ${ review_agg['count'] } | ${ str(round(review_agg['average'] * 1000)/1000) }
+  <tr><td>${ review_agg['interview'] }</td><td>${ review_agg['version'] }</td><td>${ review_agg['count'] }</td><td>${ str(round(review_agg['average'] * 1000)/1000) }</td></tr>
   % endfor
+  </tbody>
+  </table>
 ---
 template: feedback_select_template
 subject: Open answer feedback
@@ -105,8 +108,6 @@ code: |
       text_reviews[info['interview']].append(info)
     else:
       text_reviews[info['interview']] = [info]
-  for interview in text_reviews:
-    text_reviews[interview].sort(key=lambda r: r['datetime'], reverse=True)
 ---
 event: open_session
 code: |

@@ -211,6 +211,7 @@ def get_all_feedback_info(interview=None, include_archived=False) -> Iterable:
         stmt = stmt.where(feedback_session_table.c.interview == interview)
     if not include_archived:
         stmt = stmt.where(feedback_session_table.c.archived == False)
+    stmt = stmt.order_by(desc(feedback_session_table.c.datetime))
     with engine.begin() as conn:
         results = conn.execute(stmt)
         # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL
