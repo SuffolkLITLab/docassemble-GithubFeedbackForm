@@ -51,7 +51,7 @@ content: |
   <p><strong>ARCHIVED</strong></p>
   % endif
   <p>On ${ review['datetime'] }:</p>
-  <blockquote class="blockquote fs-6">${ review['body'] }</blockquote>
+  <blockquote class="blockquote fs-6">${ markdown_to_html(review['body']) }</blockquote>
   % if not review.get('html_url'):
   % if review.get('github_user'):
   ${ action_button_html(prefill_github_issue_url(repo_owner=review.get('github_user'), repo_name=review.get('github_repo_name'), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
