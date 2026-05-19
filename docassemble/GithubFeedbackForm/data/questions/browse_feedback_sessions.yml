@@ -60,7 +60,7 @@ content: |
   ${ action_button_html(prefill_github_issue_url(repo_name=interview.split(":")[0].replace(".", "-"), title="User feedback", body=review['body'], label=al_github_label), label="Make a github issue") }
   % endif
   % else:
-  <a href="${ review.get('html_url') }">Link to Github issue</a>
+  <a href="${ review.get('html_url') }">Link to GitHub issue</a>
   % endif
   % if review.get('session_id'):
   ${ action_button_html(url_action('open_session', interview=review['interview'], session_id=review.get('session_id')), label='Open Session', color='secondary') }
