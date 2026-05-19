@@ -25,6 +25,7 @@ from sqlalchemy.orm import declarative_base
 from alembic.config import Config
 from alembic import command
 from docassemble.base.util import DARedis, log
+from docassemble.base.filter import markdown_to_html
 from docassemble.base.sql import alchemy_url, connect_args
 
 __all__ = [
@@ -37,6 +38,7 @@ __all__ = [
     "get_all_feedback_info",
     "save_good_or_bad",
     "get_good_or_bad",
+    "markdown_to_html",
 ]
 
 redis_panel_emails_key = "docassemble-GithubFeedbackForm:panel_emails"
