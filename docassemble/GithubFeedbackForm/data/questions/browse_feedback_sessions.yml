@@ -44,7 +44,8 @@ template: feedback_select_template
 subject: Open answer feedback
 content: |
   % for idx, (interview, review_list) in enumerate(text_reviews.items()):
-  <a class="al_toggle" data-bs-toggle="collapse" href="#interview-feedback-${ idx }" role="button" aria-expanded="true" aria-controls="interview-feedback-${ idx }"><span class="toggle-icon pdcaretopen">${ fa_icon("caret-down") }</span><span class="toggle-icon pdcaretclosed">${ fa_icon("caret-right") }</span> <h3 class="h5 d-inline">In ${ interview }</h3></a>
+  <div class="al_collapse_template">
+  <a class="al_toggle" data-bs-toggle="collapse" href="#interview-feedback-${ idx }" role="button" aria-expanded="true" aria-controls="interview-feedback-${ idx }"><span class="toggle-icon pdcaretopen">${ fa_icon("caret-down") }</span><span class="toggle-icon pdcaretclosed">${ fa_icon("caret-right") }</span> <span class="subject h5">In ${ interview }</span></a>
   <div id="interview-feedback-${ idx }" class="collapse show">
   % for review in review_list:
   % if review['archived']:
@@ -69,6 +70,7 @@ content: |
   % endif
   <hr>
   % endfor
+  </div>
   </div>
   % endfor
 ---
