@@ -48,6 +48,7 @@ dev = [
     "docassemble.base>=1.4",
     "docassemble.webapp",
     "mypy",
+    "pytest",
     "types-requests",
     "testcontainers",
 ]

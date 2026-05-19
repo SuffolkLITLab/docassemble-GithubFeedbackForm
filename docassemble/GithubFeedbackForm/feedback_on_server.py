@@ -25,6 +25,7 @@ from sqlalchemy.orm import declarative_base
 from alembic.config import Config
 from alembic import command
 from docassemble.base.util import DARedis, log
+from docassemble.base.filter import markdown_to_html
 from docassemble.base.sql import alchemy_url, connect_args
 
 __all__ = [
@@ -37,6 +38,7 @@ __all__ = [
     "get_all_feedback_info",
     "save_good_or_bad",
     "get_good_or_bad",
+    "markdown_to_html",
 ]
 
 redis_panel_emails_key = "docassemble-GithubFeedbackForm:panel_emails"
@@ -211,6 +213,7 @@ def get_all_feedback_info(interview=None, include_archived=False) -> Iterable:
         stmt = stmt.where(feedback_session_table.c.interview == interview)
     if not include_archived:
         stmt = stmt.where(feedback_session_table.c.archived == False)
+    stmt = stmt.order_by(desc(feedback_session_table.c.datetime))
     with engine.begin() as conn:
         results = conn.execute(stmt)
         # Turn into literal dict because DA is too eager to save / load SQLAlchemy objects into the interview SQL
