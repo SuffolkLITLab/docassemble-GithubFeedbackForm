@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docassemble.GithubFeedbackForm"
-version = "0.5.6"
+version = "0.5.7"
 description = "Integration of GitHub issues with Docassemble interviews for collecting user feedback."
 readme = "README.md"
 authors = [
