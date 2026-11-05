@@ -25,8 +25,14 @@ from sqlalchemy.orm import declarative_base
 from alembic.config import Config
 from alembic import command
 from docassemble.base.util import DARedis, log
-from docassemble.base.filter import markdown_to_html
 from docassemble.base.sql import alchemy_url, connect_args
+
+try:
+    # docassemble >= 1.10 moved this function
+    from docassemble.base.filter.html import markdown_to_html
+except ModuleNotFoundError as err:
+    # docassemble < 1.10
+    from docassemble.base.filter import markdown_to_html  # type: ignore
 
 __all__ = [
     "save_feedback_info",
