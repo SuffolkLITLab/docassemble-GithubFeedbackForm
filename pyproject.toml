@@ -43,10 +43,13 @@ ignore_missing_imports = true
 module = "testcontainers.*"
 ignore_missing_imports = true
 
+[tool.uv]
+exclude-newer-package = { "suffolklitlab-docassemble.base" = false, "suffolklitlab-docassemble.webapp" = false, "suffolklitlab-docassemble.demo" = false }
+
 [dependency-groups]
 dev = [
-    "docassemble.base>=1.4",
-    "docassemble.webapp",
+    "suffolklitlab-docassemble.base>= 1.10.15",
+    "suffolklitlab-docassemble.webapp >= 1.10.15",
     "mypy",
     "pytest",
     "types-requests",
